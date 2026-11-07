@@ -14,7 +14,7 @@
 - **Can a user edit their token to become Admin?** No. The signature covers the contents, so any change makes it invalid and the API returns 401. We tested this, along with `alg:none` tokens.
 - **Is the data in the token secret?** No. A JWT is signed, not encrypted, and anyone can read it. That's why it holds no password or other sensitive data.
 - **How are passwords stored?** As salted hashes from `PasswordHasher<User>`, never as plain text. Login hashes the submitted password and compares the result.
-- **Why the same error for a wrong password and an unknown email?** To make it hard to use the login form to find out which emails exist. Unknown emails also go through a password hash check, so both cases take about the same time (191 ms vs 173 ms in our test, compared with skipping the slow hash entirely).
+- **Why the same error for a wrong password and an unknown email?** To make it hard to use the login form to find out which emails exist. Unknown emails also go through a password hash check, so both cases take about the same time (191 ms vs 173 ms in our test).
 - **What's the difference between 401 and 403?** 401 means we don't know who you are (no valid token). 403 means we know who you are, but your role isn't allowed.
 - **Why does `/me` read the database instead of the token?** The token could be up to 2 hours old. Reading the database means a deactivated user is refused right away on this endpoint.
 
