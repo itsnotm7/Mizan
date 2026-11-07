@@ -1,6 +1,10 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TicketingSystem.Application.Interfaces;
+using TicketingSystem.Domain.Entities;
+using TicketingSystem.Infrastructure.Auth;
 using TicketingSystem.Infrastructure.Persistence;
 
 namespace TicketingSystem.Infrastructure
@@ -15,6 +19,11 @@ namespace TicketingSystem.Infrastructure
                 ?? throw new InvalidOperationException("Connection string 'Default' is missing in appsettings.json.");
 
             services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+
+            services.AddSingleton(JwtOptions.Load(configuration));
+            services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
+            services.AddSingleton<ITokenService, JwtTokenService>();
+            services.AddScoped<IAuthService, AuthService>(); // Scoped because it uses the scoped DbContext
 
             return services;
         }

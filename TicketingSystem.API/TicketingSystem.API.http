@@ -1,0 +1,27 @@
+@host = http://localhost:5199
+
+### Log in. Other seeded users: admin@, manager@, leader@, member1@, member2@ (all @mizan.local)
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "client@mizan.local",
+  "password": "Mizan@123"
+}
+
+### Current user, using the token from the login above
+GET {{host}}/api/auth/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Wrong password: expect 401
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "client@mizan.local",
+  "password": "wrong"
+}
+
+### No token: expect 401
+GET {{host}}/api/auth/me
