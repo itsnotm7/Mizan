@@ -22,20 +22,35 @@ The name means "balance/scale": every code change is weighed and approved before
   - `TicketingSystem.API`: references Application + Infrastructure. Controllers, auth setup, `Program.cs`.
 - **Dependency rule: arrows point inward only.** Never make Domain or Application reference Infrastructure/API. Application defines interfaces; Infrastructure implements them.
 
-## Current state (as of Nov 7)
+## Current state (Day 2 auth finished, Nov 7)
 DONE:
 - Domain entities: `BaseEntity` (Guid Id, CreatedAt, UpdatedAt, IsDeleted), `User`, `Team`, `TeamMember`, `Ticket` (with RowVersion), `TicketAssignment`, `CodeSnapshot`, `TicketResponse`, `Comment`, `AuditLog` (not a BaseEntity, no FKs on purpose).
 - Enums: `UserRole` (Client, TeamsManager, TeamLeader, TeamMember, Admin), `TicketStatus`, `Priority`, `SnapshotKind`, `ResponseStatus` (Draft, Approved, Sent).
 - Infrastructure: `Persistence/AppDbContext.cs` (stamps UpdatedAt in SaveChangesAsync), `Persistence/Configurations/*` (one per entity, all FKs `Restrict`, enums stored as strings), `Persistence/DbSeeder.cs` (6 demo users, one per role + extra member, and "Backend Team"; password hashed with `PasswordHasher<User>`), `DependencyInjection.cs` (`AddInfrastructure`).
 - Migration `InitialCreate` applied to LocalDB. The seeder runs on startup in Development.
+- Auth: `POST /api/auth/login`, `GET /api/auth/me`, JwtBearer validation, `MapControllers().RequireAuthorization()` (every controller needs a login unless `[AllowAnonymous]`), Swagger UI at `/swagger`, global `ProblemDetails` errors. Claude's API test script passed; see open items below.
+- Git: local repo on `main`, commits are not pushed. `git` isn't on PATH, so use Visual Studio's copy: `C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe`. Commit identity is set for this repo only.
 
-NOT DONE: auth, any controllers/endpoints, Application layer content, React app, git status unknown (check it; if no repo exists, help Mahmoud create a **private** GitHub repo early).
+NOT DONE: tickets, workflow, audit logging, `AddApplication()`, Application services, React app, private GitHub repo.
+
+## Next up
+1. **Before Day 3 (mentoring rule):** Mahmoud still owes an answer to: "If a client changes `role` to `Admin` in their token's payload, why does the API reject it, even though anyone can read the token's contents?" (Answer: the signature covers the contents, so the change invalidates it, and only the server has the key.)
+2. **Start Mon 9 (Tickets) in plan mode.** The plan must settle both of these:
+   - **Where logic lives:** workflow rules belong in Application, which has no data access yet. Define the data access interface there. `AuthService` using `AppDbContext` directly in Infrastructure is fine for auth, but it is not the template for tickets.
+   - **Stale tokens:** only `/me` checks the database, so a deactivated user's token or a changed role stays valid for up to 2 hours elsewhere. Ticket services must load the current user, check `IsActive`, and take permissions from the database.
+
+Open items:
+- **Not tested:** clicking Authorize in Swagger UI in a browser; `/me` returning 401 for a user deactivated after login; `Add-Migration` with the startup key check (the `dotnet ef` CLI isn't installed, so confirm in Package Manager Console at the next migration).
+- **GitHub:** Mahmoud chose to set it up later, so there's no off-machine backup yet. Remind him before the presentation. Ask before pushing.
+- **Wed 11, with CORS:** on the `http` profile the API logs "Failed to determine the https port". Sort out `UseHttpsRedirection` then, because redirected preflight requests fail.
+- **Mahmoud to decide:** whether to remove `System.Security.Cryptography.Pkcs` from the Infrastructure csproj. No code uses it, but it may be a deliberate version pin.
+- **Permissions:** `.claude/settings.json` pre-approves `Bash(...)` commands, so PowerShell sessions may still prompt.
 
 ## The plan (backend frozen by end of Tue Nov 10)
 | Date | Goal |
 |---|---|
 | Sat 7 | ✅ Entities, DbContext, migration, seed |
-| Sun 8 | **Auth**: `POST /api/auth/login` → JWT (claims: sub=UserId, email, role). JwtBearer setup, role-based `[Authorize(Roles=...)]`, `GET /api/auth/me`. Swagger/OpenAPI usable with a bearer token. |
+| Sun 8 | ✅ **Auth**: `POST /api/auth/login` → JWT (claims: sub=UserId, email, role). JwtBearer setup, role-based `[Authorize(Roles=...)]`, `GET /api/auth/me`. Swagger/OpenAPI usable with a bearer token. |
 | Mon 9 | **Tickets**: create (Client), list filtered by role, details. DTOs, validation. |
 | Tue 10 | **Workflow** endpoints + audit logging. Run the full flow end-to-end. **Backend freeze.** |
 | Wed 11 | React (Vite) setup, CORS, login page, ticket list |
@@ -66,10 +81,10 @@ Status transitions. Enforce them in ONE place (a domain method or a single workf
 - Application: `Interfaces/`, `DTOs/`, `Services/` (or feature folders). Infrastructure implements the interfaces and is registered in `DependencyInjection.cs`. Add an `AddApplication()` extension the same way.
 - Async everywhere, `CancellationToken` passed through.
 - Errors: consistent `ProblemDetails`. A simple global exception handler is enough.
-- Config/secrets: JWT signing key in `appsettings.Development.json` (or user-secrets). Never hardcode it in code.
+- Config/secrets: JWT signing key in user-secrets only, because `appsettings.Development.json` is tracked by git. Never hardcode it in code. The app won't start without it, so a new machine needs: `dotnet user-secrets set "Jwt:SigningKey" "<at least 32 characters>" --project TicketingSystem.API`.
 - New EF changes go through a migration. **Visual Studio Package Manager Console** (Mahmoud's preferred way), with Default project = Infrastructure and Startup = API: `Add-Migration <Name> -OutputDir Persistence/Migrations`, then `Update-Database`.
   CLI equivalent from `F:\Ticketing`: `dotnet ef migrations add <Name> -p TicketingSystem.Infrastructure -s TicketingSystem.API -o Persistence/Migrations`.
-- Package versions: match the existing 10.0.x versions in the csproj files.
+- Package versions: match the existing 10.0.x versions in the csproj files. Exceptions: `Microsoft.IdentityModel.JsonWebTokens` 8.19.2 (the version `JwtBearer` 10.0.13 uses) and `Swashbuckle.AspNetCore.SwaggerUI` 10.3.1, which version separately.
 
 ## How to work (be efficient, we're short on time)
 1. **Start each day's feature in plan mode.** Propose a short plan (files to add/change), get Mahmoud's OK, then build it.
