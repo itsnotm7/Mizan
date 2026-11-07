@@ -22,7 +22,7 @@ The name means "balance/scale": every code change is weighed and approved before
   - `TicketingSystem.API`: references Application + Infrastructure. Controllers, auth setup, `Program.cs`.
 - **Dependency rule: arrows point inward only.** Never make Domain or Application reference Infrastructure/API. Application defines interfaces; Infrastructure implements them.
 
-## Current state (Day 2 auth finished, Nov 7)
+## Current state (Day 2 auth finished, Tickets in progress, Nov 7)
 DONE:
 - Domain entities: `BaseEntity` (Guid Id, CreatedAt, UpdatedAt, IsDeleted), `User`, `Team`, `TeamMember`, `Ticket` (with RowVersion), `TicketAssignment`, `CodeSnapshot`, `TicketResponse`, `Comment`, `AuditLog` (not a BaseEntity, no FKs on purpose).
 - Enums: `UserRole` (Client, TeamsManager, TeamLeader, TeamMember, Admin), `TicketStatus`, `Priority`, `SnapshotKind`, `ResponseStatus` (Draft, Approved, Sent).
@@ -31,13 +31,16 @@ DONE:
 - Auth: `POST /api/auth/login`, `GET /api/auth/me`, JwtBearer validation, `MapControllers().RequireAuthorization()` (every controller needs a login unless `[AllowAnonymous]`), Swagger UI at `/swagger`, global `ProblemDetails` errors. Claude's API test script passed; see open items below.
 - Git: local repo on `main`, commits are not pushed. `git` isn't on PATH, so use Visual Studio's copy: `C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe`. Commit identity is set for this repo only.
 
-NOT DONE: tickets, workflow, audit logging, `AddApplication()`, Application services, React app, private GitHub repo.
+IN PROGRESS (Tickets, plan approved): DTOs, repositories, `TicketService`, `TicketsController`, exceptions and `AddApplication()` are written. **The ticket endpoints don't work yet and nothing is tested:** `TicketVisibility.VisibleTo` is a stub and the "only a Client can create" check is missing.
+
+NOT DONE: workflow, audit logging, React app, private GitHub repo.
 
 ## Next up
-1. **Before Day 3 (mentoring rule):** Mahmoud still owes an answer to: "If a client changes `role` to `Admin` in their token's payload, why does the API reject it, even though anyone can read the token's contents?" (Answer: the signature covers the contents, so the change invalidates it, and only the server has the key.)
-2. **Start Mon 9 (Tickets) in plan mode.** The plan must settle both of these:
-   - **Where logic lives:** workflow rules belong in Application, which has no data access yet. Define the data access interface there. `AuthService` using `AppDbContext` directly in Infrastructure is fine for auth, but it is not the template for tickets.
-   - **Stale tokens:** only `/me` checks the database, so a deactivated user's token or a changed role stays valid for up to 2 hours elsewhere. Ticket services must load the current user, check `IsActive`, and take permissions from the database.
+**Resume from `docs/SESSION_NOTES_2026-11-07.md`.** It has the pending question, the next code, the remaining steps and the test scenarios.
+1. Mahmoud answers the pending question on piece 2 (visibility). Then add it, and walk through piece 3 (only a Client can create). He chose to walk through the core logic together, line by line.
+2. Finish Mon 9: build, test every scenario, run `code-reviewer`, update the docs, commit.
+
+`docs/CODE_GUIDE.md` explains every file in simple words. Keep it updated after each feature.
 
 Open items:
 - **Not tested:** clicking Authorize in Swagger UI in a browser; `/me` returning 401 for a user deactivated after login; `Add-Migration` with the startup key check (the `dotnet ef` CLI isn't installed, so confirm in Package Manager Console at the next migration).

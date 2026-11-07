@@ -1,19 +1,24 @@
+using System.Text.Json.Serialization;
 using TicketingSystem.API.Extensions;
 using TicketingSystem.API.Middleware;
 using TicketingSystem.API.OpenApi;
+using TicketingSystem.Application;
 using TicketingSystem.Infrastructure;
 using TicketingSystem.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddInfrastructure(builder.Configuration); // DbContext + SQL Server + auth services
+builder.Services.AddApplication(); // Business logic services
+builder.Services.AddInfrastructure(builder.Configuration); // DbContext + SQL Server + auth services + repositories
 builder.Services.AddJwtAuth(builder.Configuration);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-builder.Services.AddControllers();
+// Lets requests send enums by name ("High") instead of by number
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecurityTransformer>());
 

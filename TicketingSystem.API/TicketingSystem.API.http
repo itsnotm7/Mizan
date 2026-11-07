@@ -25,3 +25,44 @@ Content-Type: application/json
 
 ### No token: expect 401
 GET {{host}}/api/auth/me
+
+### Create a ticket: expect 201 as a client, 403 as anyone else
+# @name createTicket
+POST {{host}}/api/tickets
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Fix the null reference on checkout",
+  "description": "The checkout page crashes when the cart is empty.",
+  "repositoryUrl": "https://github.com/demo-client/shop-api",
+  "branch": "main",
+  "commitSha": "a1b2c3d",
+  "priority": "High"
+}
+
+### Bad input: expect 400 with an errors field
+POST {{host}}/api/tickets
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Bad ticket",
+  "description": "Every marked field is invalid.",
+  "repositoryUrl": "https://example.com/not-github",
+  "branch": "main",
+  "commitSha": "not-a-sha",
+  "priority": 99
+}
+
+### Tickets the logged-in user can see
+GET {{host}}/api/tickets
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Ticket details: expect 200, or 404 if this user can't see it
+GET {{host}}/api/tickets/{{createTicket.response.body.$.id}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Unknown ticket: expect 404
+GET {{host}}/api/tickets/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{login.response.body.$.accessToken}}

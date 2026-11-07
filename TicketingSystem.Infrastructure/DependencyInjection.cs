@@ -6,6 +6,7 @@ using TicketingSystem.Application.Interfaces;
 using TicketingSystem.Domain.Entities;
 using TicketingSystem.Infrastructure.Auth;
 using TicketingSystem.Infrastructure.Persistence;
+using TicketingSystem.Infrastructure.Persistence.Repositories;
 
 namespace TicketingSystem.Infrastructure
 {
@@ -24,6 +25,8 @@ namespace TicketingSystem.Infrastructure
             services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
             services.AddSingleton<ITokenService, JwtTokenService>();
             services.AddScoped<IAuthService, AuthService>(); // Scoped because it uses the scoped DbContext
+            services.AddScoped<ITicketRepository, TicketRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
 
             return services;
         }
