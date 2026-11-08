@@ -22,7 +22,7 @@ The name means "balance/scale": every code change is weighed and approved before
   - `TicketingSystem.API`: references Application + Infrastructure. Controllers, auth setup, `Program.cs`.
 - **Dependency rule: arrows point inward only.** Never make Domain or Application reference Infrastructure/API. Application defines interfaces; Infrastructure implements them.
 
-## Current state (Day 2 auth finished, Tickets in progress, Nov 7)
+## Current state (Tickets finished, Nov 8)
 DONE:
 - Domain entities: `BaseEntity` (Guid Id, CreatedAt, UpdatedAt, IsDeleted), `User`, `Team`, `TeamMember`, `Ticket` (with RowVersion), `TicketAssignment`, `CodeSnapshot`, `TicketResponse`, `Comment`, `AuditLog` (not a BaseEntity, no FKs on purpose).
 - Enums: `UserRole` (Client, TeamsManager, TeamLeader, TeamMember, Admin), `TicketStatus`, `Priority`, `SnapshotKind`, `ResponseStatus` (Draft, Approved, Sent).
@@ -31,14 +31,19 @@ DONE:
 - Auth: `POST /api/auth/login`, `GET /api/auth/me`, JwtBearer validation, `MapControllers().RequireAuthorization()` (every controller needs a login unless `[AllowAnonymous]`), Swagger UI at `/swagger`, global `ProblemDetails` errors. Claude's API test script passed; see open items below.
 - Git: local repo on `main`, commits are not pushed. `git` isn't on PATH, so use Visual Studio's copy: `C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe`. Commit identity is set for this repo only.
 
-IN PROGRESS (Tickets, plan approved): DTOs, repositories, `TicketService`, `TicketsController`, exceptions and `AddApplication()` are written. **The ticket endpoints don't work yet and nothing is tested:** `TicketVisibility.VisibleTo` is a stub and the "only a Client can create" check is missing.
+- Tickets: `POST /api/tickets` (Client only, saves the Before snapshot), `GET /api/tickets` (filtered by role), `GET /api/tickets/{id}` (404 if not visible). Application holds `TicketService`, `TicketVisibility` (the one visibility rule) and the repository interfaces. Infrastructure implements `TicketRepository` and `UserRepository`. Every ticket call reloads the user from the database (inactive gets 401, role from the database). `UnauthorizedException`, `ForbiddenException` and `NotFoundException` map to 401, 403 and 404 in `GlobalExceptionHandler`. 31 scenarios tested.
 
 NOT DONE: workflow, audit logging, React app, private GitHub repo.
 
 ## Next up
-**Resume from `docs/SESSION_NOTES_2026-11-07.md`.** It has the pending question, the next code, the remaining steps and the test scenarios.
-1. Mahmoud answers the pending question on piece 2 (visibility). Then add it, and walk through piece 3 (only a Client can create). He chose to walk through the core logic together, line by line.
-2. Finish Mon 9: build, test every scenario, run `code-reviewer`, update the docs, commit.
+**Tue 10 (Workflow + audit logging) in plan mode.** Build on the Tickets structure:
+- Reuse `GetActingUserAsync` (move it somewhere shared if the workflow service needs it) and `TicketVisibility`.
+- Add `ConflictException` (409) for invalid transitions. Turn `DbUpdateConcurrencyException` (from `RowVersion`) into a 409 too: catch it in the repository and rethrow `ConflictException`, so the API stays free of EF.
+- Both repository reads use `AsNoTracking`, so add a tracked `GetForUpdateAsync` (with Team, Assignments, Responses and the same filters). Add a way to add an `AuditLog`, so the status change and its audit row save in one `SaveChangesAsync`.
+- **Decide before writing assign:** the unique index on `TicketAssignment (TicketId, UserId)` also covers soft-deleted rows, so assigning the same member again would cause a 500. Either filter the index (`HasFilter("[IsDeleted] = 0")` plus a migration) or reactivate the old row.
+- Add `Responses` to `TicketDetailsDto`, but show the client only responses with status `Sent`.
+- Write the audit row for ticket creation too.
+- Mahmoud walks through the core logic line by line with Claude (his choice). He mixed up 403 and 404 at first: check that he understands it now.
 
 `docs/CODE_GUIDE.md` explains every file in simple words. Keep it updated after each feature.
 
@@ -54,7 +59,7 @@ Open items:
 |---|---|
 | Sat 7 | ✅ Entities, DbContext, migration, seed |
 | Sun 8 | ✅ **Auth**: `POST /api/auth/login` → JWT (claims: sub=UserId, email, role). JwtBearer setup, role-based `[Authorize(Roles=...)]`, `GET /api/auth/me`. Swagger/OpenAPI usable with a bearer token. |
-| Mon 9 | **Tickets**: create (Client), list filtered by role, details. DTOs, validation. |
+| Mon 9 | ✅ (done Nov 8) **Tickets**: create (Client), list filtered by role, details. DTOs, validation. |
 | Tue 10 | **Workflow** endpoints + audit logging. Run the full flow end-to-end. **Backend freeze.** |
 | Wed 11 | React (Vite) setup, CORS, login page, ticket list |
 | Thu 12 | Ticket details page with role-based action buttons, create-ticket form |

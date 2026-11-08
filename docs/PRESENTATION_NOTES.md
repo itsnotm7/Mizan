@@ -21,3 +21,24 @@
 ### Future work
 
 Refresh tokens, logout and token revocation, and rate limiting on login.
+
+## Tickets (create, list, details)
+
+- **What it does:** a client creates a ticket with `POST /api/tickets`, which also saves the "Before" snapshot (repo, branch, commit SHA). `GET /api/tickets` lists the tickets the caller may see, and `GET /api/tickets/{id}` shows one.
+- **Where the logic lives:** `TicketService` in Application holds the rules. It gets data through `ITicketRepository` and `IUserRepository`, which Application defines and Infrastructure implements with EF Core. Application has no EF dependency, and the controller only calls the service.
+- **The database decides, not the token:** every request reloads the user. A deactivated account gets 401 and the role comes from the database, so a change applies right away instead of after the 2-hour token expires.
+- **One visibility rule:** `TicketVisibility.VisibleTo` is used by both list and details. Client sees their own, TeamsManager and Admin see all, a leader sees their team's tickets, and a member sees only tickets they're assigned to. It's an `Expression`, so SQL does the filtering.
+- **Safe saving:** the ticket and its snapshot are saved in one `SaveChanges`, so either both are written or neither is. Input limits match the column sizes, so bad input gets a 400 and never reaches the database as a 500.
+- **Tested:** 31 scenarios passed, including an unassigned member opening a ticket by ID (404), a deactivated user (401) and a changed role (403).
+
+### Likely committee questions
+
+- **Why 404 and not 403 when a user opens someone else's ticket?** A 403 would confirm the ticket exists. A 404 gives the same answer for "doesn't exist" and "not yours." Creating a ticket returns 403, because that endpoint has nothing to hide.
+- **Why not `[Authorize(Roles = "Client")]` on create?** That reads the role from the token, which can be up to 2 hours old. The service checks the current role in the database, so there's one source of truth.
+- **Why repositories instead of using the DbContext in the service?** It keeps the business rules free of EF Core, as Clean Architecture requires. Swapping the database or faking the repository in a test doesn't touch the rules.
+- **Can a team member see all their team's tickets?** No, only the ones they're assigned to. Being on the team isn't enough. Only the leader sees the whole team's tickets.
+- **What if a new role is added later?** The visibility rule's default case returns no tickets, so a forgotten rule fails safe.
+
+### Future work
+
+Pagination and filters on the list, fetching the commit SHA from GitHub automatically, and showing responses on the details page (Tuesday).

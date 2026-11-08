@@ -12,7 +12,10 @@ namespace TicketingSystem.Application.Services
         {
             var user = await GetActingUserAsync(userId, cancellationToken);
 
-            // WALKTHROUGH piece 3: only a Client can create
+            // The role comes from the database, so a role changed after login applies right away.
+            // 403, not 404: there's nothing secret here, everyone knows this endpoint exists.
+            if (user.Role != UserRole.Client)
+                throw new ForbiddenException("Only clients can create tickets.");
 
             var ticket = new Ticket
             {

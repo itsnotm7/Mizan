@@ -1,6 +1,6 @@
 # Mizan: Code Guide
 
-Every part of the code and what it does, in simple words. Written on Nov 7, 2026, while Mon 9 (Tickets) is still in progress.
+Every part of the code and what it does, in simple words. Last updated Nov 8, 2026, after Tickets was finished.
 
 ## The big picture
 
@@ -23,10 +23,7 @@ The code is split into four projects, like the floors of a building. Each one ma
 |---|---|
 | Database, tables, demo data | Works |
 | Login, tokens, `/me` | Works and tested |
-| Checking that the caller's account is still active (piece 1) | Written, not run yet |
-| Who can see which ticket (piece 2) | **Stub** |
-| Only a client can create a ticket (piece 3) | **Missing** (marked with a comment) |
-| `/api/tickets` endpoints | **Not working yet.** List and details hit the piece 2 stub, so they return 500. Create saves a ticket for any role, then returns 500 on the same stub. |
+| Tickets: create, list by role, details | Works, 31 test scenarios passed |
 | Workflow, audit logging, React app | Not started |
 
 ## Domain: what things are
@@ -86,13 +83,20 @@ An interface is a promise: "something will do this job", without saying how.
 ### Services (`TicketingSystem.Application/Services`)
 
 **`TicketService.cs`** is the logic for tickets:
-- `CreateAsync`: loads the caller, builds the ticket and its `Before` snapshot, then saves both together. Either both are saved or neither is.
+- `CreateAsync`: loads the caller and refuses with 403 unless their role in the database is `Client`. Then it builds the ticket and its `Before` snapshot and saves both together. Either both are saved or neither is.
 - `GetVisibleTicketsAsync`: loads the caller and returns only the tickets they may see.
 - `GetByIdAsync`: same, for one ticket. Returns 404 if it doesn't exist or the caller may not see it.
 - `GetActingUserAsync`: **piece 1.** Reads the caller from the database on every request. If the account is missing, deleted or inactive, it refuses with 401. A valid token alone isn't enough.
 - The `To...Dto` methods copy entity data into DTOs.
 
-**`TicketVisibility.cs`** is the single place that will decide who sees which ticket. **It's a stub (piece 2).**
+**`TicketVisibility.cs`** is the single place that decides who sees which ticket:
+- **Client:** their own tickets.
+- **TeamsManager and Admin:** all tickets.
+- **TeamLeader:** tickets of the teams they lead. A new ticket has no team until it's routed, so no leader sees it yet.
+- **TeamMember:** only tickets they're assigned to. Being on the team isn't enough.
+- **Any other role:** nothing, so a role added later fails safe.
+
+It returns an `Expression`, which EF turns into SQL, so the database does the filtering.
 
 ### Exceptions (`TicketingSystem.Application/Exceptions`)
 Application doesn't know about HTTP, so it throws one of these and the API turns it into a status code.
@@ -187,7 +191,7 @@ The signing key is **not** in the project. It's in user-secrets on this machine.
 4. `JwtTokenService` creates a signed token.
 5. The client sends that token with every later request.
 
-### Listing tickets (once piece 2 is in)
+### Listing tickets
 1. The client sends `GET /api/tickets` with the token.
 2. JwtBearer checks the token's signature and expiry. A bad token gets 401 here.
 3. `TicketsController` takes the user's id from the token and calls `TicketService`.
