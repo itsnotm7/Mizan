@@ -39,7 +39,10 @@ if (app.Environment.IsDevelopment())
     await DbSeeder.SeedAsync(db);
 }
 
-app.UseHttpsRedirection();
+// In Development the React app reaches the API over plain http through the Vite proxy,
+// and a redirect to https would break those calls. Everywhere else, force https.
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 // Order matters: first find out who the caller is, then check what they may do
 app.UseAuthentication();

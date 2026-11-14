@@ -1,0 +1,14 @@
+/* Bootstrap does most of the work; these are the few extras it doesn't cover */
+
+body {
+  background-color: #f5f6f8;
+}
+
+.login-card {
+  max-width: 420px;
+}
+
+/* Lets a whole table row act as a link to the ticket */
+.row-link {
+  cursor: pointer;
+}

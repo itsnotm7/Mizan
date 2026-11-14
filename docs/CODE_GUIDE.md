@@ -1,6 +1,6 @@
 # Mizan: Code Guide
 
-Every part of the code and what it does, in simple words. Last updated Nov 8, 2026, after the workflow was built.
+Every part of the code and what it does, in simple words. Last updated Nov 15, 2026, after React day 1 (login and ticket list).
 
 ## The big picture
 
@@ -24,8 +24,8 @@ The code is split into four projects, like the floors of a building. Each one ma
 | Database, tables, demo data | Works |
 | Login, tokens, `/me` | Works and tested |
 | Tickets: create, list by role, details | Works, 31 test scenarios passed |
-| Workflow (10 steps), audit log, history, teams list | Works, 64 end-to-end checks passed. Not committed until Mahmoud's walkthrough. |
-| React app | Not started |
+| Workflow (10 steps), audit log, history, teams list | Works, 67 end-to-end checks passed, walked through. Backend frozen. |
+| React app | Login, logout and ticket list work. Details, actions and create form still to build. |
 
 ## Domain: what things are
 
@@ -204,6 +204,27 @@ There is one file per entity. They set column sizes, relationships and indexes. 
 | `appsettings.json` | Database connection and token settings, but never the signing key. |
 | `appsettings.Development.json` | Logging settings for Development. |
 | `Properties/launchSettings.json` | Local addresses, like `http://localhost:5199`. |
+
+## Frontend: the React app (`mizan-web/`)
+
+The screens people use. It runs on `http://localhost:5173` and only ever talks to the API through `/api/...`.
+
+| File | What it does |
+|---|---|
+| `vite.config.js` | Vite settings. The **proxy** forwards every `/api` call to the API on `localhost:5199`. The browser sees one address, so CORS never comes up. |
+| `index.html` | The one HTML page. React draws everything inside `<div id="root">`. |
+| `src/main.jsx` | The starting point: loads Bootstrap, then wraps the app in the router and the login state (`AuthProvider`). |
+| `src/App.jsx` | The list of pages (routes): `/login` is public, `/tickets` needs a login, anything else goes to `/tickets`. |
+| `src/api/client.js` | The **one** place that calls the API. It adds the token, reads the JSON, turns error responses into an `ApiError` with the API's message, and logs you out on a 401. |
+| `src/auth/AuthContext.jsx` | Remembers who is logged in and shares it with every page. `login()` calls the API and saves the token in **sessionStorage**. After a refresh it asks `/api/auth/me` whether the saved token is still good. |
+| `src/auth/RequireAuth.jsx` | A guard around pages that need a login: no user, go to `/login`. It only decides what to *show*. The API still checks every request. |
+| `src/components/Layout.jsx` | The blue top bar (name, role, Log out) around every logged-in page. |
+| `src/pages/LoginPage.jsx` | The login form, with buttons that fill in each demo account's email. |
+| `src/pages/TicketsPage.jsx` | The ticket table. The API already filters by role, so it shows whatever comes back. "New ticket" shows for clients only. |
+| `src/utils/labels.js` | Colours for status and priority badges, "LeaderReview" → "Leader Review", and showing UTC times in local time. |
+| `package.json` | The frontend's packages (React, React Router, Bootstrap, Vite) and commands (`npm run dev`, `npm run build`). |
+
+**How to run it:** start the API (Visual Studio, `http` profile, or `dotnet run --project TicketingSystem.API --launch-profile http`), then in `mizan-web` run `npm run dev` and open `http://localhost:5173`.
 
 ## Other files
 

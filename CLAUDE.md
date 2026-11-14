@@ -37,10 +37,12 @@ DONE:
 
 **Backend is frozen.** Only bug fixes from here.
 
-NOT DONE: React app.
+- React day 1 (Nov 15): `mizan-web/` (Vite 6, React 19, React Router 7, Bootstrap 5, JavaScript). The Vite proxy sends `/api` to `http://localhost:5199`, so no CORS. `UseHttpsRedirection` runs only outside Development. `src/api/client.js` (one `api()` wrapper, `ApiError`, logout on 401), `src/auth/AuthContext.jsx` (token in sessionStorage, `/me` check after a refresh), `RequireAuth`, `Layout`, `LoginPage` (demo-account buttons), `TicketsPage` (list). Tested in the browser. Run it with `.claude/launch.json` (`api` + `web`) or `npm run dev` in `mizan-web`.
+
+NOT DONE: create-ticket form (Mon 16), ticket details + action buttons + history (Tue 17).
 
 ## Next up
-1. **React (Sun 15) in plan mode.** Use `allowedActions` from ticket details to show the buttons, `GET /api/teams` for the route and assign pickers, and sort out CORS and `UseHttpsRedirection` (see open items).
+1. **Mon 16: create-ticket form** at `/tickets/new` (client only, show the API's field errors from `ApiError.fieldErrors`). **Tue 17: details page.** Use `allowedActions` from ticket details to show the buttons, `GET /api/teams` for the route and assign pickers, and sort out CORS and `UseHttpsRedirection` (see open items).
 
 `docs/CODE_GUIDE.md` explains every file in simple words. Keep it updated after each feature.
 

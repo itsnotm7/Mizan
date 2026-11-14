@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "TicketingSystem.API", "--launch-profile", "http"],
+      "port": 5199
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "mizan-web", "run", "dev"],
+      "port": 5173
+    }
+  ]
+}

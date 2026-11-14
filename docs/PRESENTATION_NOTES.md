@@ -64,3 +64,22 @@ Pagination and filters on the list, and fetching the commit SHA from GitHub auto
 ### Future work
 
 A reason text on reject and send-back, removing a member from a ticket, notifications when a ticket changes status, and a WWW-Authenticate header on 401 responses.
+
+## React app: login and ticket list
+
+- **What it does:** a React (Vite) app in `mizan-web/`, styled with Bootstrap. You log in as any demo user and see exactly the tickets the API lets that user see.
+- **One API client:** every call goes through `api()` in `src/api/client.js`. It adds the token, shows the API's own error message (the ProblemDetails `title`), and logs the user out on a 401.
+- **Proxy instead of CORS:** in development, Vite forwards `/api` to the backend, so the browser only ever talks to one address. In production you'd serve both from one domain or add a CORS policy.
+- **The token lives in sessionStorage:** it survives a refresh but is gone when the tab closes, and each tab can be logged in as a different demo user.
+- **The frontend hides, the backend decides:** the "New ticket" button only shows for clients, and protected pages redirect to login. That's for convenience. The API still checks every request.
+
+### Likely committee questions
+
+- **Why not CORS?** The Vite proxy makes the browser see one origin, so there's nothing for CORS to allow. It's less configuration and no preflight requests. HTTPS redirection is now on outside Development only, because the proxy talks plain http locally.
+- **Isn't sessionStorage open to XSS?** Any script on the page could read it, yes. React escapes everything it renders, and we never insert raw HTML. An httpOnly cookie would be safer and is listed as future work.
+- **What happens when the token expires?** The next API call gets a 401, `client.js` clears the session, and the user lands on the login page.
+- **What if someone deletes the `if (role === 'Client')` check in the browser?** They'd see the button, but `POST /api/tickets` would still refuse them with a 403, because `TicketService` checks the role from the database.
+
+### Future work
+
+An httpOnly cookie instead of sessionStorage, refresh tokens, TypeScript, and paging and filters on the list.
