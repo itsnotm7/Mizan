@@ -9,5 +9,6 @@ namespace TicketingSystem.Application.Interfaces
         Task<TicketDetailsDto> CreateAsync(Guid userId, CreateTicketRequest request, CancellationToken cancellationToken);
         Task<IReadOnlyList<TicketListItemDto>> GetVisibleTicketsAsync(Guid userId, CancellationToken cancellationToken);
         Task<TicketDetailsDto> GetByIdAsync(Guid userId, Guid ticketId, CancellationToken cancellationToken);
+        Task<IReadOnlyList<AuditEntryDto>> GetHistoryAsync(Guid userId, Guid ticketId, CancellationToken cancellationToken);
     }
 }

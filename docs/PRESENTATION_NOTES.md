@@ -41,4 +41,26 @@ Refresh tokens, logout and token revocation, and rate limiting on login.
 
 ### Future work
 
-Pagination and filters on the list, fetching the commit SHA from GitHub automatically, and showing responses on the details page (Tuesday).
+Pagination and filters on the list, and fetching the commit SHA from GitHub automatically.
+
+## Workflow and audit log
+
+- **What it does:** ten steps take a ticket from Submitted to Closed: route, reject, assign, submit, leader approve or send back, manager approve or send back, close, reopen. Each step is a `POST /api/tickets/{id}/<step>`. `GET /api/tickets/{id}/history` shows the audit log.
+- **One place for the rules:** `TicketWorkflow` is a single table. Each row lists an action, the statuses it's allowed from, the status it moves to, and who may do it. No controller or service decides transitions on its own.
+- **Permissions go beyond the role:** only the leader of **this** ticket's team can assign or review, only a member assigned to **this** ticket can submit, only the manager who routed it gives final approval, and only the owning client can close or reopen.
+- **Every step works the same way (`RunAsync`):** load the user fresh, load the ticket (404 if hidden), check the rule, make the changes, write the audit row, then save everything in one transaction.
+- **Buttons from the same rules:** ticket details include `allowedActions`, computed from the same table, so the React app shows only buttons that will work.
+- **Tested end to end:** 64 checks passed, covering the full chain with both send-backs, a reopen, close and reject, plus wrong role (403), wrong status (409), hidden ticket (404) and bad input (400). The test caught a real EF bug (new rows saved as UPDATEs), which is now fixed.
+
+### Likely committee questions
+
+- **What stops someone skipping a step, like approving straight from InProgress?** `TicketWorkflow.Apply` checks the current status against the table. A wrong status gets 409 Conflict and nothing changes.
+- **Why is the audit log in the same transaction?** If the status change and its audit row were saved separately, one could succeed without the other. Saving them together means there's never a change without a record.
+- **What if two people act on the same ticket at the same moment?** `Ticket.RowVersion` is a concurrency token. The second save fails, and the repository turns that into a 409 asking the user to reload.
+- **Why 403 for some refusals and 404 for others?** A user who can't see the ticket gets 404, so its existence stays hidden. A user who can see it but may not do this step gets 403. A step that's wrong for the ticket's current status gets 409.
+- **Can the client see the team's internal work?** No. Clients see only the response the manager sent, and a history without internal steps like send-backs.
+- **Why doesn't the frontend decide which buttons to show?** The server already knows the rules. Sending `allowedActions` means the rules exist once, on the server, and the UI can never offer a button the API would refuse.
+
+### Future work
+
+A reason text on reject and send-back, removing a member from a ticket, notifications when a ticket changes status, and a WWW-Authenticate header on 401 responses.

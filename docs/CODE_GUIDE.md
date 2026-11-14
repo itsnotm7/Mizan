@@ -1,6 +1,6 @@
 # Mizan: Code Guide
 
-Every part of the code and what it does, in simple words. Last updated Nov 8, 2026, after Tickets was finished.
+Every part of the code and what it does, in simple words. Last updated Nov 8, 2026, after the workflow was built.
 
 ## The big picture
 
@@ -24,7 +24,8 @@ The code is split into four projects, like the floors of a building. Each one ma
 | Database, tables, demo data | Works |
 | Login, tokens, `/me` | Works and tested |
 | Tickets: create, list by role, details | Works, 31 test scenarios passed |
-| Workflow, audit logging, React app | Not started |
+| Workflow (10 steps), audit log, history, teams list | Works, 64 end-to-end checks passed. Not committed until Mahmoud's walkthrough. |
+| React app | Not started |
 
 ## Domain: what things are
 
@@ -54,6 +55,7 @@ An enum is a fixed list of allowed values.
 | `Priority.cs` | Low, Medium, High, Critical |
 | `SnapshotKind.cs` | Before, After |
 | `ResponseStatus.cs` | Draft, Approved, Sent |
+| `WorkflowAction.cs` | Route, Reject, Assign, Submit, LeaderApprove, LeaderSendBack, ManagerApprove, ManagerSendBack, Close, Reopen |
 
 ## Application: the rules
 
@@ -67,7 +69,10 @@ A DTO is the shape of data going in or out of the API. We never send entities di
 | `Auth/UserDto.cs` | What the API shows about a user. No password hash. |
 | `Tickets/CreateTicketRequest.cs` | What creating a ticket receives. Checks lengths, that the URL looks like `https://github.com/owner/repo`, that the SHA is 7-64 hex characters, and that the priority really exists. |
 | `Tickets/TicketListItemDto.cs` | One row in the ticket list, with short info only. |
-| `Tickets/TicketDetailsDto.cs` | The full ticket: client, manager, team, assignees and snapshots. Also holds the small `TicketUserDto` and `CodeSnapshotDto`. |
+| `Tickets/TicketDetailsDto.cs` | The full ticket: client, manager, team, assignees, snapshots, responses, and `AllowedActions` (the buttons this user may press). Also holds the small `TicketUserDto`, `CodeSnapshotDto` and `TicketResponseDto`. |
+| `Tickets/WorkflowRequests.cs` | What the workflow steps receive: a team to route to, members to assign, and the fix to submit (branch, commit SHA, summary). |
+| `Tickets/AuditEntryDto.cs` | One line of a ticket's history: when, who, what, and the old and new values. |
+| `Teams/TeamDto.cs` | A team with its leader and members, used to pick a team or members. |
 
 ### Interfaces (`TicketingSystem.Application/Interfaces`)
 An interface is a promise: "something will do this job", without saying how.
@@ -77,8 +82,11 @@ An interface is a promise: "something will do this job", without saying how.
 | `IAuthService.cs` | Log in, get the current user | `AuthService` |
 | `ITokenService.cs` | Create a token for a user | `JwtTokenService` |
 | `ITicketService.cs` | Create a ticket, list visible tickets, get one ticket | `TicketService` |
-| `ITicketRepository.cs` | Add, save, list and read tickets from storage | `TicketRepository` |
-| `IUserRepository.cs` | Read a user by id | `UserRepository` |
+| `ITicketWorkflowService.cs` | The 10 workflow steps | `TicketWorkflowService` |
+| `ITeamService.cs` | List teams | `TeamService` |
+| `ITicketRepository.cs` | Add, save, list and read tickets, add related rows and audit rows, read history | `TicketRepository` |
+| `IUserRepository.cs` | Read a user by id, look up names | `UserRepository` |
+| `ITeamRepository.cs` | Read teams with their members | `TeamRepository` |
 
 ### Services (`TicketingSystem.Application/Services`)
 
@@ -86,8 +94,34 @@ An interface is a promise: "something will do this job", without saying how.
 - `CreateAsync`: loads the caller and refuses with 403 unless their role in the database is `Client`. Then it builds the ticket and its `Before` snapshot and saves both together. Either both are saved or neither is.
 - `GetVisibleTicketsAsync`: loads the caller and returns only the tickets they may see.
 - `GetByIdAsync`: same, for one ticket. Returns 404 if it doesn't exist or the caller may not see it.
-- `GetActingUserAsync`: **piece 1.** Reads the caller from the database on every request. If the account is missing, deleted or inactive, it refuses with 401. A valid token alone isn't enough.
-- The `To...Dto` methods copy entity data into DTOs.
+- `CreateAsync` also writes a `Created` audit row.
+- `GetHistoryAsync`: the ticket's audit log, with names filled in. Clients see only the public steps.
+- The `To...Dto` methods copy entity data into DTOs. Clients only get responses that were sent.
+
+**`ActingUserExtensions.cs`:** `GetActingUserAsync` reads the caller from the database on every request. If the account is missing, deleted or inactive, it refuses with 401, so a valid token alone isn't enough. Every service starts with it.
+
+**`TicketWorkflow.cs` is the heart of Mizan.** It's one table of rules. Each row says: this action, from these statuses, to this status, by this person.
+- `Apply` checks who first (else 403), then the current status (else 409), then changes the status.
+- `AllowedActions` uses the same table to tell the frontend which buttons to show.
+- The "who" checks are specific: the leader of *this* ticket's team, a member assigned to *this* ticket, the manager who routed it, the client who owns it.
+
+**`TicketWorkflowService.cs`** has one method per step. They all go through `RunAsync`:
+1. Load the user.
+2. Load the ticket (404 if they can't see it).
+3. Check the rule.
+4. Make the step's own changes.
+5. Write the audit row.
+6. Save it all at once.
+
+What each step changes:
+- **Route:** sets the team and the manager.
+- **Assign:** adds members from that team only. A member who's already assigned is skipped.
+- **Submit:** adds the After snapshot and a Draft response.
+- **Send back:** hides the draft.
+- **Manager approve:** sends the response to the client.
+- **Close:** sets the closing time.
+
+**`TeamService.cs`:** lists teams. The manager and admin see all teams, a leader sees their own, and anyone else gets 403.
 
 **`TicketVisibility.cs`** is the single place that decides who sees which ticket:
 - **Client:** their own tickets.
@@ -106,6 +140,8 @@ Application doesn't know about HTTP, so it throws one of these and the API turns
 | `UnauthorizedException.cs` | This account is no longer valid | 401 |
 | `ForbiddenException.cs` | We know you, but you may not do this | 403 |
 | `NotFoundException.cs` | It doesn't exist, or you may not see it | 404 |
+| `ConflictException.cs` | Not allowed in the ticket's current status, or someone else saved first | 409 |
+| `BadRequestException.cs` | Input that is wrong once checked against the database (e.g. a member from another team) | 400 |
 
 ### `DependencyInjection.cs`
 `AddApplication()` tells .NET: "when someone asks for `ITicketService`, give them `TicketService`."
@@ -118,8 +154,9 @@ Application doesn't know about HTTP, so it throws one of these and the API turns
 |---|---|
 | `AppDbContext.cs` | The connection to the database, with one `DbSet` per table. Sets `UpdatedAt` automatically on every save. |
 | `DbSeeder.cs` | Fills an empty database with demo data in Development: 6 users and "Backend Team". |
-| `Repositories/TicketRepository.cs` | Keeps the `ITicketRepository` promise. Runs the real EF queries, skips soft-deleted rows and loads related data. |
-| `Repositories/UserRepository.cs` | Keeps the `IUserRepository` promise. Reads one user by id. |
+| `Repositories/TicketRepository.cs` | Keeps the `ITicketRepository` promise. Runs the real EF queries, skips soft-deleted rows and loads related data. `GetForUpdateAsync` loads a ticket that can be changed. New rows for an existing ticket are added explicitly (see the comment in the interface). Turns "someone else saved first" into a 409. |
+| `Repositories/UserRepository.cs` | Keeps the `IUserRepository` promise. Reads one user by id, and looks up names for the history. |
+| `Repositories/TeamRepository.cs` | Keeps the `ITeamRepository` promise. Reads teams with their leader and members. |
 | `Migrations/` | Generated scripts that create the tables. `InitialCreate` is the only one so far. |
 
 ### Table rules (`Persistence/Configurations`)
@@ -156,10 +193,12 @@ There is one file per entity. They set column sizes, relationships and indexes. 
 |---|---|
 | `Program.cs` | The app's starting point. Registers everything and sets the order each request goes through. Every endpoint needs a login unless marked `[AllowAnonymous]`. |
 | `Controllers/AuthController.cs` | `POST /api/auth/login` and `GET /api/auth/me`. |
-| `Controllers/TicketsController.cs` | `POST /api/tickets`, `GET /api/tickets` and `GET /api/tickets/{id}`. Thin on purpose: it takes the caller's id from the token and calls the service. |
+| `Controllers/TicketsController.cs` | `POST /api/tickets`, `GET /api/tickets`, `GET /api/tickets/{id}` and `GET /api/tickets/{id}/history`. Thin on purpose: it takes the caller's id from the token and calls the service. |
+| `Controllers/TicketWorkflowController.cs` | One `POST /api/tickets/{id}/<step>` per workflow step. It decides nothing: the rules are in `TicketWorkflow`. |
+| `Controllers/TeamsController.cs` | `GET /api/teams`. |
 | `Extensions/AuthExtensions.cs` | Sets how tokens are checked: signature, issuer, audience, expiry and allowed algorithm. |
 | `Extensions/ClaimsPrincipalExtensions.cs` | `User.GetUserId()` reads the user's id from the token. |
-| `Middleware/GlobalExceptionHandler.cs` | Catches errors and returns a standard error response. Turns our 3 exceptions into 401, 403 and 404. Anything else becomes a 500, logged without showing details to the client. |
+| `Middleware/GlobalExceptionHandler.cs` | Catches errors and returns a standard error response. Turns our 5 exceptions into 400, 401, 403, 404 and 409. Anything else becomes a 500, logged without showing details to the client. |
 | `OpenApi/BearerSecurityTransformer.cs` | Makes Swagger UI show its Authorize button. |
 | `TicketingSystem.API.http` | Ready-made test requests for login and tickets. |
 | `appsettings.json` | Database connection and token settings, but never the signing key. |
@@ -176,6 +215,7 @@ There is one file per entity. They set column sizes, relationships and indexes. 
 | `docs/PRESENTATION_NOTES.md` | Talking points and likely committee questions. |
 | `docs/CODE_GUIDE.md` | This file. |
 | `docs/SESSION_NOTES_2026-11-07.md` | What we did on Nov 7 and exactly where we stopped. |
+| `docs/SESSION_NOTES_2026-11-08.md` | Nov 8: Tickets finished, the workflow built, and the walkthrough order for the workflow. |
 | `.claude/agents/code-reviewer.md` | Claude helper that reviews finished features. |
 | `.claude/agents/explainer.md` | Claude helper that explains code in simple terms. |
 | `.claude/settings.json` | Pre-approved commands for Claude. |
@@ -200,6 +240,14 @@ The signing key is **not** in the project. It's in user-secrets on this machine.
 6. `TicketRepository` runs the query, and SQL returns only the allowed tickets.
 7. `TicketService` copies them into DTOs, and the controller returns them.
 
+### A workflow step (e.g. the leader approves)
+1. The client sends `POST /api/tickets/{id}/leader-approve` with the token.
+2. `TicketWorkflowController` calls `TicketWorkflowService.LeaderApproveAsync`.
+3. `RunAsync` loads the user, then the ticket. A user who can't see the ticket gets 404.
+4. `TicketWorkflow.Apply` checks that this is the leader of the ticket's team (else 403) and that the status is LeaderReview (else 409). Then it sets the status to ManagerReview.
+5. An audit row records "LeaderApprove: LeaderReview → ManagerReview".
+6. One save writes both. The updated ticket comes back with its new `allowedActions`.
+
 ## Words you'll be asked about
 
 | Word | Simple meaning |
@@ -216,3 +264,7 @@ The signing key is **not** in the project. It's in user-secrets on this machine.
 | **Soft delete** | Marking a row as deleted (`IsDeleted`) without removing it. |
 | **Expression** | Code stored as a description, so EF can turn it into SQL. |
 | **401 / 403 / 404** | Don't know who you are / not allowed / not found. |
+| **409 Conflict** | The request is fine, but the ticket's current state doesn't allow it. |
+| **Transaction** | Several changes saved together: either all of them happen or none do. |
+| **Concurrency token** | A value (`RowVersion`) that changes on every save, so two people can't silently overwrite each other. |
+| **Audit log** | A history table that is only added to, never edited. |

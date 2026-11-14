@@ -34,5 +34,13 @@ namespace TicketingSystem.API.Controllers
 
             return Ok(ticket);
         }
+
+        [HttpGet("{id:guid}/history")]
+        public async Task<ActionResult<IReadOnlyList<AuditEntryDto>>> History(Guid id, CancellationToken cancellationToken)
+        {
+            var history = await ticketService.GetHistoryAsync(User.GetUserId(), id, cancellationToken);
+
+            return Ok(history);
+        }
     }
 }

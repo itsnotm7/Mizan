@@ -17,6 +17,8 @@ namespace TicketingSystem.API.Middleware
                 UnauthorizedException => (StatusCodes.Status401Unauthorized, exception.Message),
                 ForbiddenException => (StatusCodes.Status403Forbidden, exception.Message),
                 NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
+                ConflictException => (StatusCodes.Status409Conflict, exception.Message),
+                BadRequestException => (StatusCodes.Status400BadRequest, exception.Message),
                 _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
             };
 

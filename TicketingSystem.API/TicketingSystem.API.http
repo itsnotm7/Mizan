@@ -66,3 +66,74 @@ Authorization: Bearer {{login.response.body.$.accessToken}}
 ### Unknown ticket: expect 404
 GET {{host}}/api/tickets/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Ticket history (audit log). Clients see only the public steps.
+GET {{host}}/api/tickets/{{createTicket.response.body.$.id}}/history
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+########## Workflow ##########
+# Log in as the right user for each step (change the email in the login request above):
+#   route / reject                  -> manager@
+#   assign, leader-approve/send-back -> leader@
+#   submit                          -> member1@ (after being assigned)
+#   manager-approve/send-back       -> manager@ (the one who routed it)
+#   close / reopen                  -> client@
+# Every step returns the updated ticket; "allowedActions" shows what this user can do next.
+
+### Teams (manager: all teams, leader: their own). Use an id from here for "route".
+# @name teams
+GET {{host}}/api/teams
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Route to a team (manager)
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/route
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "teamId": "{{teams.response.body.$[0].id}}" }
+
+### Reject (manager, only while Submitted)
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/reject
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Assign members (leader of the ticket's team). Member ids come from GET /api/teams.
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/assign
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "memberIds": ["{{teams.response.body.$[0].members[0].id}}"] }
+
+### Submit the fix (assigned member)
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/submit
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "branch": "fix/checkout",
+  "commitSha": "b2c3d4e",
+  "summary": "Added a null check for an empty cart."
+}
+
+### Leader approves / sends back
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/leader-approve
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/leader-send-back
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Manager approves (sends the response to the client) / sends back
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/manager-approve
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/manager-send-back
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Client closes / reopens
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/close
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
+POST {{host}}/api/tickets/{{createTicket.response.body.$.id}}/reopen
+Authorization: Bearer {{login.response.body.$.accessToken}}

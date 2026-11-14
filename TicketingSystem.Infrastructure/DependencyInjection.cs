@@ -27,6 +27,7 @@ namespace TicketingSystem.Infrastructure
             services.AddScoped<IAuthService, AuthService>(); // Scoped because it uses the scoped DbContext
             services.AddScoped<ITicketRepository, TicketRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ITeamRepository, TeamRepository>();
 
             return services;
         }

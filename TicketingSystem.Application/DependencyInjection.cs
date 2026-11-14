@@ -10,6 +10,8 @@ namespace TicketingSystem.Application
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
             services.AddScoped<ITicketService, TicketService>();
+            services.AddScoped<ITicketWorkflowService, TicketWorkflowService>();
+            services.AddScoped<ITeamService, TeamService>();
 
             return services;
         }

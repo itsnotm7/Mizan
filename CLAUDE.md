@@ -33,17 +33,13 @@ DONE:
 
 - Tickets: `POST /api/tickets` (Client only, saves the Before snapshot), `GET /api/tickets` (filtered by role), `GET /api/tickets/{id}` (404 if not visible). Application holds `TicketService`, `TicketVisibility` (the one visibility rule) and the repository interfaces. Infrastructure implements `TicketRepository` and `UserRepository`. Every ticket call reloads the user from the database (inactive gets 401, role from the database). `UnauthorizedException`, `ForbiddenException` and `NotFoundException` map to 401, 403 and 404 in `GlobalExceptionHandler`. 31 scenarios tested.
 
-NOT DONE: workflow, audit logging, React app, private GitHub repo.
+BUILT, NOT COMMITTED (Workflow + audit, built Nov 8 while Mahmoud was away): `TicketWorkflow` (the one rules table), `TicketWorkflowService` (`RunAsync` pipeline), 10 `POST /api/tickets/{id}/<step>` endpoints, `GET /api/tickets/{id}/history`, `GET /api/teams`, and `allowedActions` plus responses in ticket details. 67 end-to-end checks pass, and the code review is done with its fixes in. Details are in `docs/SESSION_NOTES_2026-11-08.md`.
+
+NOT DONE: React app, private GitHub repo.
 
 ## Next up
-**Tue 10 (Workflow + audit logging) in plan mode.** Build on the Tickets structure:
-- Reuse `GetActingUserAsync` (move it somewhere shared if the workflow service needs it) and `TicketVisibility`.
-- Add `ConflictException` (409) for invalid transitions. Turn `DbUpdateConcurrencyException` (from `RowVersion`) into a 409 too: catch it in the repository and rethrow `ConflictException`, so the API stays free of EF.
-- Both repository reads use `AsNoTracking`, so add a tracked `GetForUpdateAsync` (with Team, Assignments, Responses and the same filters). Add a way to add an `AuditLog`, so the status change and its audit row save in one `SaveChangesAsync`.
-- **Decide before writing assign:** the unique index on `TicketAssignment (TicketId, UserId)` also covers soft-deleted rows, so assigning the same member again would cause a 500. Either filter the index (`HasFilter("[IsDeleted] = 0")` plus a migration) or reactivate the old row.
-- Add `Responses` to `TicketDetailsDto`, but show the client only responses with status `Sent`.
-- Write the audit row for ticket creation too.
-- Mahmoud walks through the core logic line by line with Claude (his choice). He mixed up 403 and 404 at first: check that he understands it now.
+1. **Mahmoud's walkthrough of the workflow core logic** (order and questions in `docs/SESSION_NOTES_2026-11-08.md`). He chose line-by-line walkthroughs, and this code was written while he was away, so don't skip it. Then commit: that's the backend freeze.
+2. **Wed 11 (React) in plan mode**, possibly starting early. Use `allowedActions` from ticket details to show the buttons, `GET /api/teams` for the route and assign pickers, and sort out CORS and `UseHttpsRedirection` (see open items).
 
 `docs/CODE_GUIDE.md` explains every file in simple words. Keep it updated after each feature.
 

@@ -14,7 +14,9 @@ namespace TicketingSystem.Application.DTOs.Tickets
         Guid? TeamId,
         string? TeamName,
         IReadOnlyList<TicketUserDto> Assignees,
-        IReadOnlyList<CodeSnapshotDto> Snapshots);
+        IReadOnlyList<CodeSnapshotDto> Snapshots,
+        IReadOnlyList<TicketResponseDto> Responses,
+        IReadOnlyList<string> AllowedActions);
 
     // Only the id and name: a ticket screen has no reason to expose emails or roles
     public record TicketUserDto(Guid Id, string Name);
@@ -26,4 +28,12 @@ namespace TicketingSystem.Application.DTOs.Tickets
         string Branch,
         string CommitSha,
         DateTime CreatedAt);
+
+    public record TicketResponseDto(
+        Guid Id,
+        string Summary,
+        string Status,
+        TicketUserDto Author,
+        DateTime CreatedAt,
+        DateTime? SentAt);
 }
