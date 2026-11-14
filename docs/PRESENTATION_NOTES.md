@@ -83,3 +83,22 @@ A reason text on reject and send-back, removing a member from a ticket, notifica
 ### Future work
 
 An httpOnly cookie instead of sessionStorage, refresh tokens, TypeScript, and paging and filters on the list.
+
+## React app: create form and ticket details
+
+- **What it does:** clients create tickets from a form. Everyone opens a ticket and sees its info, the Before/After code snapshots (linked to the commits on GitHub), the responses, the history, and only the buttons they may use right now. The whole chain, from create to close, including send-backs and reopen, runs in the browser.
+- **Buttons come from the server:** the page draws one control per name in `allowedActions`. `workflow/actions.js` only says how each one *looks* (text, colour, URL). Who gets which button is decided by the same rules table that enforces it.
+- **Validation lives on the server:** the form only checks "required" and length. The real rules (GitHub URL format, hex SHA) are in `CreateTicketRequest`, and their messages appear under the matching field. There's one set of rules, not two copies that can drift apart.
+- **Every action returns the updated ticket:** after a click, the page swaps in the API's answer, so the status, the buttons and the history update without a page reload.
+- **Small safety touches:** pasted values are trimmed, Reject and Close ask "are you sure?", buttons are disabled while a request runs, and Back after creating a ticket doesn't reopen an empty form.
+
+### Likely committee questions
+
+- **What if two people click at the same time?** The second save hits the ticket's `RowVersion` check and gets a 409. The page shows the message and asks the user to reload.
+- **Why doesn't the client see the team's first attempt that was sent back?** The API only gives clients `Sent` responses, and only the snapshots that belong to them. Drafts and internal steps stay inside the team.
+- **Why is Member Two's view a 404 and not a 403?** Member Two isn't assigned, so the ticket isn't visible to them at all. A 404 doesn't even reveal that it exists.
+- **Why `window.confirm` and not a nice dialog?** It's the simplest thing that prevents an accidental reject or close. A styled dialog is part of the visual polish.
+
+### Future work
+
+A styled confirm dialog, a reason text when rejecting or sending back, live updates when someone else changes the ticket (SignalR), and comments.

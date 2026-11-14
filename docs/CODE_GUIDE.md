@@ -25,7 +25,7 @@ The code is split into four projects, like the floors of a building. Each one ma
 | Login, tokens, `/me` | Works and tested |
 | Tickets: create, list by role, details | Works, 31 test scenarios passed |
 | Workflow (10 steps), audit log, history, teams list | Works, 67 end-to-end checks passed, walked through. Backend frozen. |
-| React app | Login, logout and ticket list work. Details, actions and create form still to build. |
+| React app | Login, list, create form, and the details page with every workflow button and the history. The full chain was run in the browser. Visual polish still to do. |
 
 ## Domain: what things are
 
@@ -221,7 +221,16 @@ The screens people use. It runs on `http://localhost:5173` and only ever talks t
 | `src/components/Layout.jsx` | The blue top bar (name, role, Log out) around every logged-in page. |
 | `src/pages/LoginPage.jsx` | The login form, with buttons that fill in each demo account's email. |
 | `src/pages/TicketsPage.jsx` | The ticket table. The API already filters by role, so it shows whatever comes back. "New ticket" shows for clients only. |
-| `src/utils/labels.js` | Colours for status and priority badges, "LeaderReview" → "Leader Review", and showing UTC times in local time. |
+| `src/pages/CreateTicketPage.jsx` | The new-ticket form (clients only). It trims what you typed, sends it, and shows the server's message under each field it rejects. |
+| `src/pages/TicketDetailsPage.jsx` | One ticket: its info, code snapshots (linked to the commit on GitHub), responses, your action buttons, and the history. Every button ends up in `handleAction`, which POSTs the step and swaps in the updated ticket the API sends back. |
+| `src/workflow/actions.js` | How each workflow action *looks*: its URL, button text and colour, and whether it needs a form or a "are you sure?". It does **not** decide who gets which button: that's `allowedActions` from the server. |
+| `src/components/ticket/ActionsPanel.jsx` | Draws one button or small form for each action in `allowedActions`. Reject and Close ask for confirmation first. |
+| `src/components/ticket/RouteForm.jsx` | Manager: choose the team (from `GET /api/teams`). |
+| `src/components/ticket/AssignForm.jsx` | Leader: tick members of their team. People already on the ticket stay ticked. On a reopened ticket, "Continue with current team" needs no new ticks. |
+| `src/components/ticket/SubmitFixForm.jsx` | Member: branch, commit SHA and summary of the fix. The summary becomes the response the client reads. |
+| `src/components/ticket/HistoryList.jsx` | The audit log as a list: what happened, who did it, old status → new status. |
+| `src/utils/fieldErrors.js` | Finds the server's message for one form field in a 400 response. |
+| `src/utils/labels.js` | Colours for status and priority badges, readable names ("LeaderReview" → "Leader Review", audit actions → "Leader sent back"), and showing UTC times in local time. |
 | `package.json` | The frontend's packages (React, React Router, Bootstrap, Vite) and commands (`npm run dev`, `npm run build`). |
 
 **How to run it:** start the API (Visual Studio, `http` profile, or `dotnet run --project TicketingSystem.API --launch-profile http`), then in `mizan-web` run `npm run dev` and open `http://localhost:5173`.
@@ -268,6 +277,14 @@ The signing key is **not** in the project. It's in user-secrets on this machine.
 4. `TicketWorkflow.Apply` checks that this is the leader of the ticket's team (else 403) and that the status is LeaderReview (else 409). Then it sets the status to ManagerReview.
 5. An audit row records "LeaderApprove: LeaderReview → ManagerReview".
 6. One save writes both. The updated ticket comes back with its new `allowedActions`.
+
+### A button click in the React app (the same step, seen from the browser)
+1. The details page loads `GET /api/tickets/{id}`. The answer includes `allowedActions`, e.g. `["LeaderApprove", "LeaderSendBack"]`.
+2. `ActionsPanel` draws one button per name, using `workflow/actions.js` for the text and colour.
+3. The leader clicks **Approve**. `handleAction` sends `POST /api/tickets/{id}/leader-approve` through `api()`.
+4. The backend runs the 6 steps above and returns the updated ticket.
+5. The page swaps in the new ticket. Its `allowedActions` is now empty for the leader, so the buttons disappear, and the history reloads with the new row.
+6. If the API refuses (403/409/400), its message shows in a red alert above the buttons, and nothing changes.
 
 ## Words you'll be asked about
 
