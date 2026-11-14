@@ -4,7 +4,7 @@ Read this whole file before doing anything. It is the project brief, the plan, a
 
 ## Who you're working with
 - **Mahmoud**, junior .NET developer (CoderZ ASP.NET Core Full-Stack graduate). This is his **CoderZ final project**, and he may sell it to a real company afterwards.
-- **Presentation: Saturday, Nov 14, 2026.** He must be able to explain and defend every file in front of a committee.
+- **Presentation: Saturday, Nov 21, 2026** (pushed back from Nov 14). He must be able to explain and defend every file in front of a committee.
 - Communication: casual, direct, concise. English or Arabic (Levantine) are both fine.
 - Machine: Windows, Visual Studio + VS Code, SQL Server **LocalDB** `(localdb)\MSSQLLocalDB`, database `MizanDb`.
 
@@ -22,44 +22,47 @@ The name means "balance/scale": every code change is weighed and approved before
   - `TicketingSystem.API`: references Application + Infrastructure. Controllers, auth setup, `Program.cs`.
 - **Dependency rule: arrows point inward only.** Never make Domain or Application reference Infrastructure/API. Application defines interfaces; Infrastructure implements them.
 
-## Current state (Tickets finished, Nov 8)
+## Current state (backend frozen, Nov 15)
 DONE:
 - Domain entities: `BaseEntity` (Guid Id, CreatedAt, UpdatedAt, IsDeleted), `User`, `Team`, `TeamMember`, `Ticket` (with RowVersion), `TicketAssignment`, `CodeSnapshot`, `TicketResponse`, `Comment`, `AuditLog` (not a BaseEntity, no FKs on purpose).
 - Enums: `UserRole` (Client, TeamsManager, TeamLeader, TeamMember, Admin), `TicketStatus`, `Priority`, `SnapshotKind`, `ResponseStatus` (Draft, Approved, Sent).
 - Infrastructure: `Persistence/AppDbContext.cs` (stamps UpdatedAt in SaveChangesAsync), `Persistence/Configurations/*` (one per entity, all FKs `Restrict`, enums stored as strings), `Persistence/DbSeeder.cs` (6 demo users, one per role + extra member, and "Backend Team"; password hashed with `PasswordHasher<User>`), `DependencyInjection.cs` (`AddInfrastructure`).
 - Migration `InitialCreate` applied to LocalDB. The seeder runs on startup in Development.
 - Auth: `POST /api/auth/login`, `GET /api/auth/me`, JwtBearer validation, `MapControllers().RequireAuthorization()` (every controller needs a login unless `[AllowAnonymous]`), Swagger UI at `/swagger`, global `ProblemDetails` errors. Claude's API test script passed; see open items below.
-- Git: local repo on `main`, commits are not pushed. `git` isn't on PATH, so use Visual Studio's copy: `C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe`. Commit identity is set for this repo only.
+- Git: repo on `main`, remote `origin` = https://github.com/itsnotm7/Mizan (private). Ask before pushing. `git` isn't on PATH, so use Visual Studio's copy: `C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe`. Commit identity is set for this repo only.
 
 - Tickets: `POST /api/tickets` (Client only, saves the Before snapshot), `GET /api/tickets` (filtered by role), `GET /api/tickets/{id}` (404 if not visible). Application holds `TicketService`, `TicketVisibility` (the one visibility rule) and the repository interfaces. Infrastructure implements `TicketRepository` and `UserRepository`. Every ticket call reloads the user from the database (inactive gets 401, role from the database). `UnauthorizedException`, `ForbiddenException` and `NotFoundException` map to 401, 403 and 404 in `GlobalExceptionHandler`. 31 scenarios tested.
 
-BUILT, NOT COMMITTED (Workflow + audit, built Nov 8 while Mahmoud was away): `TicketWorkflow` (the one rules table), `TicketWorkflowService` (`RunAsync` pipeline), 10 `POST /api/tickets/{id}/<step>` endpoints, `GET /api/tickets/{id}/history`, `GET /api/teams`, and `allowedActions` plus responses in ticket details. 67 end-to-end checks pass, and the code review is done with its fixes in. Details are in `docs/SESSION_NOTES_2026-11-08.md`.
+- Workflow + audit: `TicketWorkflow` (the one rules table), `TicketWorkflowService` (`RunAsync` pipeline), 10 `POST /api/tickets/{id}/<step>` endpoints, `GET /api/tickets/{id}/history`, `GET /api/teams`, and `allowedActions` plus responses in ticket details. 67 end-to-end checks pass, code review done. Mahmoud walked through it line by line on Nov 14–15. Details and points to rehearse are in `docs/SESSION_NOTES_2026-11-08.md`.
 
-NOT DONE: React app, private GitHub repo.
+**Backend is frozen.** Only bug fixes from here.
+
+NOT DONE: React app.
 
 ## Next up
-1. **Mahmoud's walkthrough of the workflow core logic** (order and questions in `docs/SESSION_NOTES_2026-11-08.md`). He chose line-by-line walkthroughs, and this code was written while he was away, so don't skip it. Then commit: that's the backend freeze.
-2. **Wed 11 (React) in plan mode**, possibly starting early. Use `allowedActions` from ticket details to show the buttons, `GET /api/teams` for the route and assign pickers, and sort out CORS and `UseHttpsRedirection` (see open items).
+1. **React (Sun 15) in plan mode.** Use `allowedActions` from ticket details to show the buttons, `GET /api/teams` for the route and assign pickers, and sort out CORS and `UseHttpsRedirection` (see open items).
 
 `docs/CODE_GUIDE.md` explains every file in simple words. Keep it updated after each feature.
 
 Open items:
 - **Not tested:** clicking Authorize in Swagger UI in a browser; `/me` returning 401 for a user deactivated after login; `Add-Migration` with the startup key check (the `dotnet ef` CLI isn't installed, so confirm in Package Manager Console at the next migration).
-- **GitHub:** Mahmoud chose to set it up later, so there's no off-machine backup yet. Remind him before the presentation. Ask before pushing.
-- **Wed 11, with CORS:** on the `http` profile the API logs "Failed to determine the https port". Sort out `UseHttpsRedirection` then, because redirected preflight requests fail.
+- **With CORS (React day 1):** on the `http` profile the API logs "Failed to determine the https port". Sort out `UseHttpsRedirection` then, because redirected preflight requests fail.
 - **Mahmoud to decide:** whether to remove `System.Security.Cryptography.Pkcs` from the Infrastructure csproj. No code uses it, but it may be a deliberate version pin.
 - **Permissions:** `.claude/settings.json` pre-approves `Bash(...)` commands, so PowerShell sessions may still prompt.
 
-## The plan (backend frozen by end of Tue Nov 10)
+## The plan (presentation Sat Nov 21)
 | Date | Goal |
 |---|---|
 | Sat 7 | ✅ Entities, DbContext, migration, seed |
-| Sun 8 | ✅ **Auth**: `POST /api/auth/login` → JWT (claims: sub=UserId, email, role). JwtBearer setup, role-based `[Authorize(Roles=...)]`, `GET /api/auth/me`. Swagger/OpenAPI usable with a bearer token. |
-| Mon 9 | ✅ (done Nov 8) **Tickets**: create (Client), list filtered by role, details. DTOs, validation. |
-| Tue 10 | **Workflow** endpoints + audit logging. Run the full flow end-to-end. **Backend freeze.** |
-| Wed 11 | React (Vite) setup, CORS, login page, ticket list |
-| Thu 12 | Ticket details page with role-based action buttons, create-ticket form |
-| Fri 13 | Demo data, bug fixes, slides, rehearsal |
+| Sun 8 | ✅ **Auth**: login → JWT, JwtBearer, roles, `/me`, Swagger with bearer token. Also ✅ **Tickets** (create, list by role, details). |
+| Nov 8–15 | ✅ **Workflow** endpoints + audit logging, walkthrough done. **Backend freeze (Nov 15).** |
+| Sun 15 | React (Vite) setup, CORS + `UseHttpsRedirection` fix, login page, auth context |
+| Mon 16 | Ticket list + create-ticket form |
+| Tue 17 | Ticket details: buttons from `allowedActions`, route/assign pickers, history |
+| Wed 18 | Full flow through the UI, bug fixes. **Frontend freeze.** |
+| Thu 19 | Demo data, slides |
+| Fri 20 | Rehearsal + buffer |
+| Sat 21 | **Presentation** |
 
 If a day slips, **cut scope, don't move the freeze.**
 

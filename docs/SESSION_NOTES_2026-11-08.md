@@ -69,8 +69,11 @@ Ticket details now also include `responses` (clients see only Sent ones) and `al
 
 After the fixes, 67 workflow checks and the 31 ticket checks pass.
 
-## Still to do for Tue 10
-1. Mahmoud's walkthrough (above).
-2. Commit. That's the backend freeze, ahead of schedule.
+## Walkthrough done (Nov 14–15), backend frozen
+The presentation moved to Sat Nov 21. Mahmoud walked through all four files above. Rehearse these points, which took a second pass:
+- **Both checks in a rule must pass:** right person **and** right status. A leader assigning a Closed ticket fails the status check → 409.
+- **Who before status:** a client pressing `assign` gets 403, not 409. "Never you" is permanent; "not now" would suggest trying again later.
+- **Where drafts are hidden:** ManagerApprove *sets* Sent; `TicketService` (details mapping) *filters* so clients only see Sent responses and their fixes.
+- **Async ≠ faster:** async frees the thread so the server handles more requests at once; the per-request user lookup is cheap because it's a ~1 ms primary-key lookup, and it makes deactivation instant.
 
-After that the backend is frozen, and Wed 11 (React) can start early.
+Next: React, starting Sun 15.
