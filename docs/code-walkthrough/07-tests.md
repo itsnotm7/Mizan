@@ -18,7 +18,7 @@ The project references **Application** and **Domain** only (the same inward arro
 | `TicketWorkflowRouteRejectAssignTests.cs` | Route, Reject, Assign, and the order of the checks | Claude (worked examples) |
 | `TicketWorkflowAllowedActionsTests.cs` | Which buttons each person gets at each status | Claude |
 | `TicketVisibilityTests.cs` | Who sees which ticket | Claude |
-| `TicketWorkflowLaterStepsTests.cs` | Submit, LeaderApprove/SendBack, ManagerApprove/SendBack, Close, Reopen | **Mahmoud** |
+| `TicketWorkflowLaterStepsTests.cs` | Submit, LeaderApprove/SendBack, ManagerApprove/SendBack, Close, Reopen, and the full chain | Claude, at Mahmoud's request (walked through in 7.5) |
 
 ---
 
@@ -182,9 +182,74 @@ A: It tests the same *logic*. The SQL translation is EF Core's job, and it was c
 
 ---
 
-## 7.5 `TicketWorkflowLaterStepsTests.cs`: Mahmoud's tests
+## 7.5 `TicketWorkflowLaterStepsTests.cs`: the rest of the rules table
 
-The rest of the rules table. The file starts with a checklist comment and one finished example (`Submit_ByAssignedMember_WhenInProgress_MovesToLeaderReview`) to copy. *(This section gets the line-by-line once the tests are written.)*
+26 tests (counting each `[InlineData]` row) for the last 7 rows of the table. Every action gets the same three tests, so learning **one of each kind** means you can explain them all.
+
+### Kind 1: right person, right status → the status changes
+
+```csharp
+        [Fact]
+        public void ManagerApprove_ByRoutingManager_WhenManagerReview_MovesToResponseSent()
+        {
+            var ticket = data.TicketIn(TicketStatus.ManagerReview);
+
+            var oldStatus = TicketWorkflow.Apply(data.Manager, ticket, WorkflowAction.ManagerApprove);
+
+            Assert.Equal(TicketStatus.ResponseSent, ticket.Status);
+            Assert.Equal(TicketStatus.ManagerReview, oldStatus);
+        }
+```
+- **The name** reads as a sentence: *Action_ByWho_WhenStatus_ExpectedResult*. A failing test's name already tells you what broke.
+- **Arrange** (`TicketIn`): a ticket that has reached Manager Review. `TestData` fills in what the real workflow would have set: the team, `ManagerId = data.Manager.Id`, and Member assigned.
+- **Act** (`Apply`): the same method the API calls for `POST /api/tickets/{id}/manager-approve`.
+- **Assert**: two checks. The ticket moved to `ResponseSent`, and `Apply` returned the *old* status, which the service writes into the audit log as `OldValue`.
+
+### Kind 2: same role, wrong person → Forbidden (403)
+
+```csharp
+        [Fact]
+        public void ManagerApprove_ByAnotherManager_IsForbidden()
+        {
+            var ticket = data.TicketIn(TicketStatus.ManagerReview);
+
+            Assert.Throws<ForbiddenException>(() =>
+                TicketWorkflow.Apply(data.OtherManager, ticket, WorkflowAction.ManagerApprove));
+            Assert.Equal(TicketStatus.ManagerReview, ticket.Status);
+        }
+```
+- `OtherManager` **is** a TeamsManager, so a role-only check would let them through. The test passes only because the rule also checks `ticket.ManagerId == user.Id`. This is the "beyond the role" requirement, proven.
+- `Assert.Throws<...>(() => ...)`: the `() =>` wraps the call so xUnit can run it *inside* a try/catch. The test passes only if exactly that exception is thrown.
+- The last line checks that a refused action **changed nothing**.
+
+### Kind 3: right person, wrong status → Conflict (409)
+
+```csharp
+        [Fact]
+        public void ManagerApprove_ByRoutingManager_WhenLeaderReview_IsConflict()
+        {
+            // The manager can't skip the leader's review
+            var ticket = data.TicketIn(TicketStatus.LeaderReview);
+
+            Assert.Throws<ConflictException>(() =>
+                TicketWorkflow.Apply(data.Manager, ticket, WorkflowAction.ManagerApprove));
+            Assert.Equal(TicketStatus.LeaderReview, ticket.Status);
+        }
+```
+- The right manager, but the leader hasn't approved yet. This test proves nobody can **skip a step**.
+
+### The extras worth knowing
+
+- **`Submit_ByMemberWhoseAssignmentWasRemoved_IsForbidden`**: it sets the assignment's `IsDeleted = true`, and the member is refused. That's the `!a.IsDeleted` in `IsAssignedMember`.
+- **`Submit_..._WhenNotInProgress_IsConflict`** is a `[Theory]` with 3 rows (LeaderReview, ResponseSent, Closed): one test, three statuses. LeaderReview covers "submitting twice".
+- **`LeaderApprove_ByAssignedMember_IsForbidden`**: the member who wrote the fix can't approve their own work.
+- **`FullChain_WithBothSendBacksAndAReopen_EndsClosed`**: one ticket walked through 16 steps, with both send-backs and a reopen. Each `Apply` throws if a step is wrong, so reaching `Closed` proves the whole path. It also teaches something: **`Apply` only changes the status.** On Route, the test has to set the team and manager itself, and on Assign the assignment. In the real app that's `TicketWorkflowService`'s job. The first version of this test forgot it and failed on Assign with Forbidden, because a ticket with no team has no team leader.
+
+**Q: Why test the wrong person with the SAME role?**
+A: A user with a different role (a client approving) would be refused by a simple role check anyway. A user with the same role but no link to this ticket is the case that proves the deeper check exists. If someone simplified the rule to "any manager", only that test would catch it.
+
+**Q: Why check the status again after a refused action?**
+A: To prove the refusal happens *before* anything changes. If `Apply` set the status first and threw afterwards, the API's transaction would roll back, but the rule itself would be wrong.
 
 ---
 
@@ -195,6 +260,8 @@ A test that can't fail is worthless. To check, we broke one rule on purpose: Rou
 - `Routed_OnlyThisTeamsLeaderCanAssign` (a manager suddenly had a Route button on a routed ticket)
 
 Then the rule was put back and `git diff` confirmed `TicketWorkflow.cs` was unchanged. This trick is called **mutation testing**.
+
+A second round after the later-step tests were added: `IsRoutingManager` was changed to "any TeamsManager" (dropping `ticket.ManagerId == user.Id`). Three tests failed: `ManagerApprove_ByAnotherManager_IsForbidden`, `ManagerSendBack_ByAnotherManager_IsForbidden` and `ManagerReview_OnlyTheManagerWhoRoutedItCanApproveOrSendBack`. Reverted, and all 59 passed again.
 
 ## What the tests don't cover (and why that's OK)
 

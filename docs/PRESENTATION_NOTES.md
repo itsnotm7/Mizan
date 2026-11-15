@@ -122,7 +122,8 @@ A styled confirm dialog, a reason text when rejecting or sending back, live upda
 - **What it does:** `TicketingSystem.Tests` checks the rules table (`TicketWorkflow`) and the visibility rule (`TicketVisibility`). For every action there are three kinds of test: the right person at the right status succeeds, the wrong person gets Forbidden (403), and the right person at the wrong status gets Conflict (409). Run with `dotnet test` or Visual Studio's Test Explorer. All of them run in under a second.
 - **Why these classes:** they hold the core business logic and they're pure: a user and a ticket in, an answer out. No database, no mocks, so the tests are short and never flaky.
 - **"Beyond the role" is tested:** the test data has an *Other* user per role (another team's leader, a manager who didn't route the ticket). Those users must be refused, which proves the checks look at *which* person, not just the role.
-- **The tests were proven to work:** one rule was broken on purpose (Route allowed from Routed) and two tests failed. Then it was reverted.
+- **The tests were proven to work:** one rule was broken on purpose (Route allowed from Routed) and two tests failed. Then it was reverted. A second round (final approval allowed for *any* manager) failed three tests.
+- **All 10 actions are covered:** 59 tests, including a full-chain test that walks one ticket through 16 steps (both send-backs and a reopen) to Closed.
 
 ### Likely committee questions
 

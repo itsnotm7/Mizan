@@ -46,10 +46,13 @@ DONE:
 
 - Visual polish (Nov 16): navy + gold theme in `index.css` (Bootstrap CSS variables, no Sass), `bootstrap-icons` + `@fontsource/inter`/`cairo` (bundled, works offline), `Logo`, split login page, display-only `WorkflowStepper` on ticket details, `HistoryList` as a timeline, icons on actions. Checked in the browser (full chain, Rejected, Reopened, Closed, 375px). Code review done, walkthrough chapter 6 updated.
 
-NOT DONE: Mahmoud's later-step tests, cleaning up the oddities in `docs/code-walkthrough/README.md`, demo data, slides. Optional later: a styled confirm dialog instead of `window.confirm`.
+- Later-step tests (Nov 16): Mahmoud asked Claude to write them. 59 tests pass (all 10 actions + a full-chain test), second mutation check done. Walkthrough 7.5 explains one test of each kind; Mahmoud still needs to walk through it.
+- Logout fix (Nov 16): after a logout, the next account no longer lands on the previous user's page. An expired session shows a message.
+
+NOT DONE: Mahmoud walking through the tests (7.5), cleaning up the oddities in `docs/code-walkthrough/README.md`, demo data, slides. Optional later: a styled confirm dialog instead of `window.confirm`.
 
 ## Next up
-1. Mahmoud's later-step tests; bug fixes. **Frontend freeze Wed 18.**
+1. Bug fixes and frontend checks. **Frontend freeze Wed 18.**
 2. **Demo data + slides** (Thu 19). Rehearsal Fri 20. Note: the demo DB ticket "Search returns duplicate products" is now Reopened (used for testing the stepper).
 
 `docs/CODE_GUIDE.md` explains every file in simple words. `docs/code-walkthrough/` (6 chapters + README) shows the real code of every file with line-by-line explanations and committee Q&A. Keep both updated after each feature: when code changes, update the copied code and the "Line N" references in the matching chapter.
