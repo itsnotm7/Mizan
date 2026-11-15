@@ -77,7 +77,8 @@ A reason text on reject and send-back, removing a member from a ticket, notifica
 
 - **Why not CORS?** The Vite proxy makes the browser see one origin, so there's nothing for CORS to allow. It's less configuration and no preflight requests. HTTPS redirection is now on outside Development only, because the proxy talks plain http locally.
 - **Isn't sessionStorage open to XSS?** Any script on the page could read it, yes. React escapes everything it renders, and we never insert raw HTML. An httpOnly cookie would be safer and is listed as future work.
-- **What happens when the token expires?** The next API call gets a 401, `client.js` clears the session, and the user lands on the login page.
+- **What happens when the token expires?** The next API call gets a 401, `client.js` clears the session, and the user lands on the login page with "Your session has expired".
+- **If A logs out and B logs in on the same browser, where does B land?** On the ticket list, always. "Take me back to the page I wanted" only applies to someone who opened a link while logged out. That was a real bug we found and fixed: B used to land on A's last ticket. Even then the API returned 404 if the ticket wasn't B's, so no data leaked.
 - **What if someone deletes the `if (role === 'Client')` check in the browser?** They'd see the button, but `POST /api/tickets` would still refuse them with a 403, because `TicketService` checks the role from the database.
 
 ### Future work

@@ -21,7 +21,7 @@ const highlights = [
 ]
 
 export default function LoginPage() {
-  const { user, login } = useAuth()
+  const { user, signedOut, login } = useAuth()
   const location = useLocation()
 
   const [email, setEmail] = useState('')
@@ -73,6 +73,10 @@ export default function LoginPage() {
               <h1 className="h4 page-title mb-1">Sign in</h1>
               <p className="text-muted mb-4">Welcome back. Pick a demo account below or type your email.</p>
 
+              {/* Logged out by the API (401), not by a click: say why, or it looks like a bug */}
+              {signedOut === 'expired' && !error && (
+                <div className="alert alert-warning py-2">Your session has expired. Please sign in again.</div>
+              )}
               {error && <div className="alert alert-danger py-2">{error}</div>}
 
               <form onSubmit={handleSubmit}>

@@ -20,7 +20,8 @@ export default function Layout() {
               <span className="d-none d-sm-inline">{user.name}</span>
               <span className="badge role-badge">{roleLabel(user.role)}</span>
             </span>
-            <button className="btn btn-outline-light btn-sm" onClick={logout}>
+            {/* Arrow function: onClick={logout} would pass the click event in as the "reason" */}
+            <button className="btn btn-outline-light btn-sm" onClick={() => logout()}>
               <i className="bi bi-box-arrow-right me-1" aria-hidden="true"></i>
               Log out
             </button>

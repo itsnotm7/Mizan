@@ -218,7 +218,7 @@ The screens people use. It runs on `http://localhost:5173` and only ever talks t
 | `src/App.jsx` | The list of pages (routes): `/login` is public, `/tickets` needs a login, anything else goes to `/tickets`. |
 | `src/api/client.js` | The **one** place that calls the API. It adds the token, reads the JSON, turns error responses into an `ApiError` with the API's message, and logs you out on a 401. |
 | `src/auth/AuthContext.jsx` | Remembers who is logged in and shares it with every page. `login()` calls the API and saves the token in **sessionStorage**. After a refresh it asks `/api/auth/me` whether the saved token is still good. |
-| `src/auth/RequireAuth.jsx` | A guard around pages that need a login: no user, go to `/login`. It only decides what to *show*. The API still checks every request. |
+| `src/auth/RequireAuth.jsx` | A guard around pages that need a login: no user, go to `/login`. If you opened a link while logged out, it remembers that page so login takes you there. After a logout or an expired session it does **not**, because the next person may be a different account. It only decides what to *show*. The API still checks every request. |
 | `src/components/Layout.jsx` | The navy top bar (logo, name, role, Log out) around every logged-in page. |
 | `src/components/Logo.jsx` | The Mizan mark: a gold balance scale drawn in SVG, plus "Mizan ميزان". Used in the top bar and on the login page. |
 | `src/pages/LoginPage.jsx` | The login form, with buttons that fill in each demo account's email. On wide screens a navy side panel shows the logo and three selling points. |

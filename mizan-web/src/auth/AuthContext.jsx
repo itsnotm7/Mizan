@@ -11,15 +11,20 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   // True until we know whether a saved token is still good, so pages don't flash the login screen
   const [checking, setChecking] = useState(() => tokenStore.get() !== null)
+  // Why the last session ended: null (none yet), 'manual' (Log out) or 'expired' (a 401).
+  // Set together with user = null, so RequireAuth knows this isn't a fresh visitor and must
+  // NOT remember the old page: the next person to log in may be someone else.
+  const [signedOut, setSignedOut] = useState(null)
 
-  const logout = useCallback(() => {
+  const logout = useCallback((reason = 'manual') => {
     tokenStore.clear()
     setUser(null)
+    setSignedOut(reason)
     navigate('/login', { replace: true })
   }, [navigate])
 
   useEffect(() => {
-    setUnauthorizedHandler(logout)
+    setUnauthorizedHandler(() => logout('expired'))
   }, [logout])
 
   // After a page refresh, ask the API who the saved token belongs to.
@@ -49,10 +54,14 @@ export function AuthProvider({ children }) {
     const result = await api('/auth/login', { method: 'POST', body: { email, password } })
     tokenStore.set(result.accessToken)
     setUser(result.user)
+    setSignedOut(null)
   }, [])
 
   // The same object between renders unless something changed, so pages don't redraw for nothing
-  const value = useMemo(() => ({ user, checking, login, logout }), [user, checking, login, logout])
+  const value = useMemo(
+    () => ({ user, checking, signedOut, login, logout }),
+    [user, checking, signedOut, login, logout],
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -621,7 +621,7 @@ export const isAbort = (err) => err?.name === 'AbortError'
 - Line 4: the key under which the JWT is saved in the browser.
 - Line 6-10: `tokenStore` is an object with three small functions. `(token) => ...` is an **arrow function**, the JavaScript version of a C# lambda. `sessionStorage` is a key-value store in the browser that lives **per tab** and is wiped when the tab closes. We chose it over `localStorage` (which survives forever) so a forgotten demo session doesn't stay logged in, and the token lives as short a time as possible. Every place that touches the token goes through these three functions.
 - Line 13-20: `ApiError` is a custom exception class, like `class ApiError : Exception` in C#. `super(title)` calls the base constructor (like `: base(title)`), so `err.message` is the ProblemDetails `title`. It adds `status` (the HTTP status code) and `fieldErrors` (the `errors` dictionary from a 400 validation response). `fieldErrors = {}` is a default parameter value, like `= null` in C#.
-- Line 23-26: a **module-level variable** that holds "what to do on a 401". It starts as a function that does nothing. `AuthContext` calls `setUnauthorizedHandler(logout)` at startup. Why not import `logout` directly? Because `client.js` is plain JavaScript, not a component, so it can't use React hooks like `useNavigate`. The handler pattern lets React plug its logout into the plain module. It is like registering a callback (an event handler) in C#.
+- Line 23-26: a **module-level variable** that holds "what to do on a 401". It starts as a function that does nothing. `AuthContext` calls `setUnauthorizedHandler(() => logout('expired'))` at startup. Why not import `logout` directly? Because `client.js` is plain JavaScript, not a component, so it can't use React hooks like `useNavigate`. The handler pattern lets React plug its logout into the plain module. It is like registering a callback (an event handler) in C#.
 - Line 29: `isAbort` tells apart "the request was cancelled on purpose" from a real failure. `err?.name` is **optional chaining**: if `err` is `null` or `undefined`, the result is `undefined` instead of a crash. It is the same as `?.` in C#.
 
 **The code (part 2: the `api()` function, sending the request):**
@@ -728,15 +728,20 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   // True until we know whether a saved token is still good, so pages don't flash the login screen
   const [checking, setChecking] = useState(() => tokenStore.get() !== null)
+  // Why the last session ended: null (none yet), 'manual' (Log out) or 'expired' (a 401).
+  // Set together with user = null, so RequireAuth knows this isn't a fresh visitor and must
+  // NOT remember the old page: the next person to log in may be someone else.
+  const [signedOut, setSignedOut] = useState(null)
 
-  const logout = useCallback(() => {
+  const logout = useCallback((reason = 'manual') => {
     tokenStore.clear()
     setUser(null)
+    setSignedOut(reason)
     navigate('/login', { replace: true })
   }, [navigate])
 
   useEffect(() => {
-    setUnauthorizedHandler(logout)
+    setUnauthorizedHandler(() => logout('expired'))
   }, [logout])
 ```
 
@@ -747,8 +752,10 @@ export function AuthProvider({ children }) {
 - Line 10: **`useNavigate`** is a React Router hook that returns a function to change the URL from code. A **hook** is a special React function whose name starts with `use`. Hooks may only be called at the top of a component, never inside `if` or loops, because React identifies them by their order.
 - Line 11: **`useState`** gives a component memory that survives redraws. It returns a pair: the current value and a setter. `const [user, setUser] = ...` is **array destructuring** of that pair. Calling `setUser(x)` stores the new value and tells React to redraw the component. You never assign `user = x` directly; React would not notice.
 - Line 13: `checking` starts as `true` only if a token is already saved (after a page refresh). Passing a function `() => ...` to `useState` means "compute the first value once", not on every redraw. While `checking` is true, `RequireAuth` shows "Loading…" instead of flashing the login page.
-- Line 15-19: `logout` clears the token, forgets the user and goes to `/login`. `{ replace: true }` replaces the current history entry, so Back doesn't return to a protected page. **`useCallback`** keeps the *same function object* between redraws; it only makes a new one when something in its **dependency array** (`[navigate]`) changes. Why care: in JavaScript a function defined inside a component is a new object on every redraw, and other hooks (line 21-23, line 55) compare by reference. Without `useCallback`, they would see a "change" on every redraw.
-- Line 21-23: **`useEffect`** runs code *after* the component is drawn, for side effects (calls to the API, timers, wiring outside code). The **dependency array** `[logout]` says when to run it again: only when `logout` changes. Here it plugs our `logout` into `client.js`, so a 401 anywhere logs the user out in one place.
+- Line 14-17: `signedOut` remembers **why** the last session ended: `null` (nobody has logged out in this tab yet), `'manual'` (the user clicked Log out) or `'expired'` (the API answered 401). Why it exists: a bug fix. Before it, logging out on a ticket page and logging in as a **different** account sent the new user to the previous user's ticket. `logout()` set `user` to `null`, React redrew the ticket page with no user, and `RequireAuth` remembered that page as if a logged-out visitor had opened a link. Now `RequireAuth` can tell the two cases apart (see its section).
+- Line 19-24: `logout` clears the token, forgets the user, records the reason and goes to `/login`. `(reason = 'manual')` is a **default parameter**: calling `logout()` with nothing means `'manual'`. `{ replace: true }` replaces the current history entry, so Back doesn't return to a protected page. **`useCallback`** keeps the *same function object* between redraws; it only makes a new one when something in its **dependency array** (`[navigate]`) changes. Why care: in JavaScript a function defined inside a component is a new object on every redraw, and other hooks (line 26-28, line 61-64) compare by reference. Without `useCallback`, they would see a "change" on every redraw.
+- Line 21-22: `setUser(null)` and `setSignedOut(reason)` are called one after the other in the same function, and React applies them **together** in one redraw (this is called **batching**). So there is never a moment where `user` is `null` but `signedOut` is still `null`, which is what makes the `RequireAuth` check reliable.
+- Line 26-28: **`useEffect`** runs code *after* the component is drawn, for side effects (calls to the API, timers, wiring outside code). The **dependency array** `[logout]` says when to run it again: only when `logout` changes. Here it plugs a small arrow function into `client.js`, so a 401 anywhere logs the user out in one place, with the reason `'expired'`. `LoginPage` uses that reason to say "Your session has expired" instead of silently showing the login form.
 
 **The code (part 2: the `/me` check after a refresh):**
 
@@ -777,13 +784,13 @@ export function AuthProvider({ children }) {
 
 **Line by line:**
 - Why this exists: after F5, the React state is gone (memory is wiped), but the token is still in sessionStorage. We have the token but don't know who it belongs to, or whether it is still valid.
-- Line 28 and 44: an effect with an **empty dependency array** `[]` runs once, when the component first appears (in development, StrictMode runs it twice; see below).
-- Line 29: no saved token, nothing to check. (`checking` was already `false` in that case.)
-- Line 31-32: create an AbortController and call `GET /api/auth/me` with its signal.
-- Line 33-40: **Promise chaining**, the non-`await` way to handle async results. `.then(fn)` runs when it succeeds (like the code after `await`), `.catch(fn)` when it fails (like `catch`), `.finally(fn)` always (like `finally`). `.then(setUser)` passes the result straight into `setUser`, so the user object returned by `/me` becomes the logged-in user.
-- Line 34-37: errors are deliberately ignored here. A 401 has already been handled inside `api()` (logout). Any other error (API down) keeps the token, so the next refresh can try again; since `user` is still `null`, the guard sends the user to `/login` for now.
-- Line 38-40: stop showing "Loading…", unless this call was cancelled.
-- Line 43: the **cleanup function**. If an effect returns a function, React calls it when the component goes away, or before running the effect again. Here it aborts the request. Why this matters: in development, StrictMode mounts, unmounts and mounts again. Run 1 starts a request, cleanup aborts it, run 2 starts a fresh one. The aborted run 1 skips `setChecking(false)` (line 39), so only run 2 decides. Without the cleanup, two `/me` calls would race.
+- Line 33 and 49: an effect with an **empty dependency array** `[]` runs once, when the component first appears (in development, StrictMode runs it twice; see below).
+- Line 34: no saved token, nothing to check. (`checking` was already `false` in that case.)
+- Line 36-37: create an AbortController and call `GET /api/auth/me` with its signal.
+- Line 38-45: **Promise chaining**, the non-`await` way to handle async results. `.then(fn)` runs when it succeeds (like the code after `await`), `.catch(fn)` when it fails (like `catch`), `.finally(fn)` always (like `finally`). `.then(setUser)` passes the result straight into `setUser`, so the user object returned by `/me` becomes the logged-in user.
+- Line 39-42: errors are deliberately ignored here. A 401 has already been handled inside `api()` (logout, with the reason `'expired'`). Any other error (API down) keeps the token, so the next refresh can try again; since `user` is still `null`, the guard sends the user to `/login` for now.
+- Line 43-45: stop showing "Loading…", unless this call was cancelled.
+- Line 48: the **cleanup function**. If an effect returns a function, React calls it when the component goes away, or before running the effect again. Here it aborts the request. Why this matters: in development, StrictMode mounts, unmounts and mounts again. Run 1 starts a request, cleanup aborts it, run 2 starts a fresh one. The aborted run 1 skips `setChecking(false)` (line 44), so only run 2 decides. Without the cleanup, two `/me` calls would race.
 
 **The code (part 3: login and the shared value):**
 
@@ -794,10 +801,14 @@ export function AuthProvider({ children }) {
     const result = await api('/auth/login', { method: 'POST', body: { email, password } })
     tokenStore.set(result.accessToken)
     setUser(result.user)
+    setSignedOut(null)
   }, [])
 
   // The same object between renders unless something changed, so pages don't redraw for nothing
-  const value = useMemo(() => ({ user, checking, login, logout }), [user, checking, login, logout])
+  const value = useMemo(
+    () => ({ user, checking, signedOut, login, logout }),
+    [user, checking, signedOut, login, logout],
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
@@ -808,16 +819,18 @@ export function useAuth() {
 ```
 
 **Line by line:**
-- Line 46-52: `login` posts the email and password to `/api/auth/login`. `{ email, password }` is shorthand for `{ email: email, password: password }`. On success it saves the JWT (`accessToken`) and the user from the response. If the call fails, `api()` throws an `ApiError` and `login` lets it bubble up to `LoginPage`, which shows the message.
-- Line 48: clear any old token first, so it is not sent with the login request (and so a 401 for a wrong password can't trigger a logout; see `client.js` line 65).
-- Line 55: **`useMemo`** caches a computed value and only recomputes it when a dependency changes. Here it builds the object every component reads. Why: when the context value is a new object, *every* component using `useAuth()` redraws. With `useMemo` the object only changes when `user`, `checking`, `login` or `logout` really change. That is also why `login` and `logout` are wrapped in `useCallback`: otherwise they would be new each time and break the memo.
-- Line 57: `AuthContext.Provider` makes `value` available to everything inside it (`children`).
-- Line 60-62: **`useContext`** reads the nearest provider's value. `useAuth` is a **custom hook**: a normal function whose name starts with `use` and which calls other hooks. Any component can write `const { user, logout } = useAuth()` (object destructuring) instead of knowing about the context object.
+- Line 51-58: `login` posts the email and password to `/api/auth/login`. `{ email, password }` is shorthand for `{ email: email, password: password }`. On success it saves the JWT (`accessToken`) and the user from the response. If the call fails, `api()` throws an `ApiError` and `login` lets it bubble up to `LoginPage`, which shows the message.
+- Line 53: clear any old token first, so it is not sent with the login request (and so a 401 for a wrong password can't trigger a logout; see `client.js` line 65).
+- Line 57: a new session has started, so forget why the old one ended. This also hides the "session expired" message. It only runs after a **successful** login: if the password is wrong, line 54 throws first and `signedOut` keeps its value.
+- Line 61-64: **`useMemo`** caches a computed value and only recomputes it when a dependency changes. Here it builds the object every component reads. Why: when the context value is a new object, *every* component using `useAuth()` redraws. With `useMemo` the object only changes when `user`, `checking`, `signedOut`, `login` or `logout` really change. That is also why `login` and `logout` are wrapped in `useCallback`: otherwise they would be new each time and break the memo. `signedOut` is in both lists (the object and the dependency array): forgetting it in the array would hand out an old value.
+- Line 66: `AuthContext.Provider` makes `value` available to everything inside it (`children`).
+- Line 69-71: **`useContext`** reads the nearest provider's value. `useAuth` is a **custom hook**: a normal function whose name starts with `use` and which calls other hooks. Any component can write `const { user, logout } = useAuth()` (object destructuring) instead of knowing about the context object.
 
 **Committee might ask:**
 - *Is the role in the frontend trusted?* No. It only decides what to show. The backend reloads the user and role from the database on every ticket request.
 - *What happens on F5?* The token stays in sessionStorage. `checking` starts `true`, the app shows "Loading…", calls `/me`, gets the user back and shows the page. If the user was deactivated, `/me` returns 401 and the app logs out.
-- *Why `useCallback` and `useMemo`?* To keep the same objects between redraws, so components that use the auth context don't redraw when nothing changed. It is a small optimization, but it also keeps the `useEffect` on line 21 from re-running every redraw.
+- *Why `useCallback` and `useMemo`?* To keep the same objects between redraws, so components that use the auth context don't redraw when nothing changed. It is a small optimization, but it also keeps the `useEffect` on line 26 from re-running every redraw.
+- *What happens if user A logs out and user B logs in on the same browser?* B always starts at the ticket list. The "go back to the page you wanted" memory only applies to someone who opened a link while logged out (`signedOut` is `null`). After a logout it is `'manual'` or `'expired'`, so `RequireAuth` doesn't remember A's page. And even if B somehow reached A's ticket URL, the API decides visibility, so B gets a 404 if the ticket isn't theirs.
 
 ---
 
@@ -834,7 +847,7 @@ import { useAuth } from './AuthContext.jsx'
 // Wraps pages that need a login. This only decides what to SHOW:
 // the API still checks the token on every request, so hiding a page is not the security.
 export default function RequireAuth({ children }) {
-  const { user, checking } = useAuth()
+  const { user, checking, signedOut } = useAuth()
   const location = useLocation()
 
   if (checking) {
@@ -842,8 +855,11 @@ export default function RequireAuth({ children }) {
   }
 
   if (!user) {
-    // Remember where they were going, so login can send them back there
-    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
+    // A visitor who opened a link while logged out: remember it, so login sends them there.
+    // After a logout (or an expired session) start fresh instead: the next person to log in
+    // may be a different account, and must not land on the previous user's page.
+    const state = signedOut ? undefined : { from: location.pathname + location.search }
+    return <Navigate to="/login" replace state={state} />
   }
 
   return children
@@ -851,11 +867,15 @@ export default function RequireAuth({ children }) {
 ```
 
 **Line by line:**
-- Line 7: read `user` and `checking` from the auth context.
+- Line 7: read `user`, `checking` and `signedOut` from the auth context.
 - Line 8: **`useLocation`** returns the current URL (path, query string, and any extra `state`).
 - Line 10-12: **conditional rendering** with a plain `if`: a component can return different JSX depending on its data. While the `/me` check runs, show "Loading…".
-- Line 14-17: not logged in: redirect to `/login`. `state={{ from: ... }}` attaches hidden data to the navigation (not in the URL). The double braces are JSX `{ }` holding a JavaScript object `{ from: ... }`. `LoginPage` reads `location.state.from` to send the user back to the page they wanted, for example a ticket link.
-- Line 19: logged in: draw what was wrapped (`<Layout />` in `App.jsx`).
+- Line 14-20: not logged in: redirect to `/login`. There are two very different reasons to end up here, and the comment on line 15-17 names them:
+  - A **visitor who opened a link** while logged out (for example someone pasted a ticket URL). `signedOut` is `null`. We remember the page, so after login they land where they wanted.
+  - Someone who **just logged out**, or whose session **expired**. `signedOut` is `'manual'` or `'expired'`. Why does this case reach the guard at all? `logout()` sets `user` to `null`, and React redraws the page the user was on *before* the navigation to `/login` happens, so the guard runs on that page. We must **not** remember it: the next person to log in may be a different account. This was the bug: user B logged in and was sent to user A's ticket.
+- Line 18: a **ternary** picks the navigation state. `signedOut ? undefined : {...}` reads "if the user signed out, no state; otherwise remember the page". `{ from: ... }` is hidden data attached to the navigation (not in the URL). `location.pathname + location.search` is the path plus the query string (`?x=1`), if any.
+- Line 19: `<Navigate>` redirects. `state={state}` passes that object, or `undefined` (no state). `LoginPage` reads `location.state?.from` to send the user back to the page they wanted, and falls back to `/tickets` when there is none.
+- Line 22: logged in: draw what was wrapped (`<Layout />` in `App.jsx`).
 
 **Committee might ask:**
 - *Can a user bypass this by editing the JavaScript?* Yes, they can see an empty page. But every API call still needs a valid JWT, and the server decides what data they get. This guard is for user experience, not security. The comment on line 4-5 says that.
@@ -891,7 +911,8 @@ export default function Layout() {
               <span className="d-none d-sm-inline">{user.name}</span>
               <span className="badge role-badge">{roleLabel(user.role)}</span>
             </span>
-            <button className="btn btn-outline-light btn-sm" onClick={logout}>
+            {/* Arrow function: onClick={logout} would pass the click event in as the "reason" */}
+            <button className="btn btn-outline-light btn-sm" onClick={() => logout()}>
               <i className="bi bi-box-arrow-right me-1" aria-hidden="true"></i>
               Log out
             </button>
@@ -909,15 +930,15 @@ export default function Layout() {
 
 **Line by line:**
 - Line 4: imports the `Logo` component (next section). A component is used in JSX like an HTML tag: `<Logo />`.
-- Line 11 and 34: `<>...</>` is a **fragment**: a wrapper that adds no HTML element. A component must return one root, and a fragment lets us return two siblings (`nav` and `main`).
+- Line 11 and 35: `<>...</>` is a **fragment**: a wrapper that adds no HTML element. A component must return one root, and a fragment lets us return two siblings (`nav` and `main`).
 - Line 12: `navbar-dark` tells Bootstrap the background is dark, so it uses light text. `navbar-mizan` (from `index.css`) paints it navy with the gold bottom line.
 - Line 14-16: **`Link`** is React Router's version of `<a>`. It changes the URL without reloading the page. Inside it is the logo, so clicking the logo goes back to the ticket list.
 - Line 19: a person icon. `fs-5` is Bootstrap's "font size 5" (icons are a font, so font size sets their size).
 - Line 20: `{user.name}`: curly braces in JSX insert a JavaScript value. React escapes it as text, so a name containing `<script>` is shown as text, never run. `user` is never `null` here, because `RequireAuth` only draws `Layout` when a user exists. `d-none d-sm-inline` means "hidden on phones, shown from small screens up", so the navbar doesn't wrap on a narrow phone; the role badge still shows.
 - Line 21: the role from the API is `"TeamLeader"`; `roleLabel` shows "Team Leader". `role-badge` gives it the gold outline.
-- Line 23: `onClick={logout}` passes the function itself (no parentheses), so React calls it on click. Writing `onClick={logout()}` would call it immediately during drawing.
-- Line 24: a "leave" icon before the text. `me-1` is a small margin on the right (margin-end) so the icon doesn't touch the text.
-- Line 32: **`Outlet`** is where the matching child route (`TicketsPage`, `CreateTicketPage` or `TicketDetailsPage`) is drawn.
+- Line 23-24: the Log out button. `onClick={() => logout()}` wraps the call in an **arrow function**, so React calls it on click (writing `onClick={logout()}` would call it immediately, during drawing). Why not the shorter `onClick={logout}`? React calls the click handler **with the click event** as its first argument. `logout` takes `reason` as its first parameter, so `onClick={logout}` would set `reason` to the event object instead of `'manual'`. The arrow function calls `logout()` with no arguments, so the default `'manual'` is used. The comment on line 23 says this, so nobody "simplifies" it back later.
+- Line 25: a "leave" icon before the text. `me-1` is a small margin on the right (margin-end) so the icon doesn't touch the text.
+- Line 33: **`Outlet`** is where the matching child route (`TicketsPage`, `CreateTicketPage` or `TicketDetailsPage`) is drawn.
 
 ---
 
@@ -993,7 +1014,7 @@ const highlights = [
 ]
 
 export default function LoginPage() {
-  const { user, login } = useAuth()
+  const { user, signedOut, login } = useAuth()
   const location = useLocation()
 
   const [email, setEmail] = useState('')
@@ -1022,8 +1043,9 @@ export default function LoginPage() {
 - Line 4: the `Logo` component, used on the side panel and above the form on phones.
 - Line 8-14: a constant list of the seeded accounts, outside the component, so it is created once. Only the emails are here. The password is **not** in the frontend; the user types it (the hint on screen says it comes from the seeder). The admin account is left out because there are no admin screens (cut from scope). `icon` is the Bootstrap Icons name drawn on each demo button.
 - Line 17-21: the three short selling points shown on the navy side panel, each with an icon. Keeping them in a list (instead of three copies of the same JSX) means the JSX below draws them with one `.map`.
+- Line 24: read `user`, `signedOut` and `login` from the auth context. `signedOut` is used further down to show the "session expired" message.
 - Line 27-30: four pieces of state: the two input values, the error message, and whether a login is in progress.
-- Line 34: if a user exists, redirect. This covers two cases with one line: someone opens `/login` while already logged in, and the moment right after a successful login (`login()` calls `setUser`, React redraws this page, and now `user` is set). `location.state?.from` is the page `RequireAuth` remembered; `?.` handles the case where there is no state, and `??` falls back to `/tickets`. Note: this early `return` comes after all the hooks, which is required (hooks must always run in the same order).
+- Line 34: if a user exists, redirect. This covers two cases with one line: someone opens `/login` while already logged in, and the moment right after a successful login (`login()` calls `setUser`, React redraws this page, and now `user` is set). `location.state?.from` is the page `RequireAuth` remembered; `?.` handles the case where there is no state, and `??` falls back to `/tickets`. After a logout there is never a remembered page (`RequireAuth` doesn't save one when `signedOut` is set), so the next person always starts at `/tickets`. Note: this early `return` comes after all the hooks, which is required (hooks must always run in the same order).
 - Line 36-46: the submit handler. **`event.preventDefault()`**: an HTML form's default action is to send the data and reload the page. In an SPA that would wipe all state, so we stop it and handle the submit in JavaScript. Then: clear the old error, disable the button, `await login(...)`. On failure show the `ApiError` message (for example the API's "invalid email or password" title) and enable the button again. On success there is nothing to do: line 34 handles the redirect on the next redraw.
 
 **The code (part 2: the form):**
@@ -1057,6 +1079,10 @@ export default function LoginPage() {
               <h1 className="h4 page-title mb-1">Sign in</h1>
               <p className="text-muted mb-4">Welcome back. Pick a demo account below or type your email.</p>
 
+              {/* Logged out by the API (401), not by a click: say why, or it looks like a bug */}
+              {signedOut === 'expired' && !error && (
+                <div className="alert alert-warning py-2">Your session has expired. Please sign in again.</div>
+              )}
               {error && <div className="alert alert-danger py-2">{error}</div>}
 
               <form onSubmit={handleSubmit}>
@@ -1121,16 +1147,17 @@ export default function LoginPage() {
 - Line 66: a small footer line at the bottom of the panel.
 - Line 69: the form side takes the other 7 columns. On phones it takes the full width.
 - Line 72: `d-md-none` is the opposite of line 53: shown **only** on phones. Since the side panel is hidden there, the logo appears above the form instead, with `light={false}` because the background is white.
-- Line 76: **conditional rendering with `&&`**: `{error && <div>...</div>}` draws the alert only when `error` has a value. If `error` is `null`, React draws nothing. It reads as "if error, then show this".
-- Line 78: `onSubmit={handleSubmit}` runs on the Submit button or Enter.
-- Line 81-89: a **controlled input**: React state is the single source of truth. `value={email}` makes the input show the state, and `onChange` copies every keystroke back into state with `setEmail(e.target.value)`. `e.target` is the input element. Because state drives the input, a demo button can fill it with one `setEmail` call (line 115).
-- Line 80 and 92: `htmlFor` is JSX for the HTML `for` attribute (again because `for` is a JavaScript word). It ties the label to the input.
-- Line 87: `required` is a browser check: the form won't submit with an empty field.
-- Line 102-104: the button is disabled while logging in, so a second click can't send a second request. The text uses a **ternary** (`condition ? a : b`), the same as in C#.
-- Line 110-120: **rendering a list with `.map`**: `.map` turns each item of an array into something else, like LINQ `Select`. Here each account becomes a `<button>`. The **`key`** prop gives each item a stable, unique id, so React can tell which item is which when the list changes. The email is unique, so it is the key.
-- Line 113: `type="button"` matters: a button inside or near a form defaults to `submit`. These are outside the `<form>`, but saying it explicitly avoids accidents.
-- Line 115: `onClick={() => setEmail(account.email)}` wraps the call in an arrow function so it runs on click, not during drawing.
-- Line 117: the account's icon before its label. The class name is built with a template literal: `bi bi-person`, `bi bi-diagram-3`, ...
+- Line 76-79: the **"session expired"** message, a yellow alert. It shows only when `signedOut === 'expired'`, meaning the API answered 401 (token expired, or the user was deactivated) and the app logged the user out by itself. Without it, the user would suddenly see the login page with no explanation, which looks like a bug. A normal Log out click (`'manual'`) shows nothing, because the user knows why they are here. `&& !error` hides it as soon as a login attempt fails, so only one message shows at a time (the red one). The round brackets `( ... )` around the JSX just let it span several lines. After a successful login, `login()` sets `signedOut` back to `null`.
+- Line 80: **conditional rendering with `&&`**: `{error && <div>...</div>}` draws the alert only when `error` has a value. If `error` is `null`, React draws nothing. It reads as "if error, then show this". Line 77 uses the same trick with two conditions joined.
+- Line 82: `onSubmit={handleSubmit}` runs on the Submit button or Enter.
+- Line 85-93: a **controlled input**: React state is the single source of truth. `value={email}` makes the input show the state, and `onChange` copies every keystroke back into state with `setEmail(e.target.value)`. `e.target` is the input element. Because state drives the input, a demo button can fill it with one `setEmail` call (line 119).
+- Line 84 and 96: `htmlFor` is JSX for the HTML `for` attribute (again because `for` is a JavaScript word). It ties the label to the input.
+- Line 91: `required` is a browser check: the form won't submit with an empty field.
+- Line 106-108: the button is disabled while logging in, so a second click can't send a second request. The text uses a **ternary** (`condition ? a : b`), the same as in C#.
+- Line 114-124: **rendering a list with `.map`**: `.map` turns each item of an array into something else, like LINQ `Select`. Here each account becomes a `<button>`. The **`key`** prop gives each item a stable, unique id, so React can tell which item is which when the list changes. The email is unique, so it is the key.
+- Line 117: `type="button"` matters: a button inside or near a form defaults to `submit`. These are outside the `<form>`, but saying it explicitly avoids accidents.
+- Line 119: `onClick={() => setEmail(account.email)}` wraps the call in an arrow function so it runs on click, not during drawing.
+- Line 121: the account's icon before its label. The class name is built with a template literal: `bi bi-person`, `bi bi-diagram-3`, ...
 
 **Committee might ask:**
 - *Why is there no registration screen?* Out of scope for the MVP. Users are seeded (`DbSeeder.cs`). Registration and admin screens are future work.
