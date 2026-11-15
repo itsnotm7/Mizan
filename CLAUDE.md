@@ -57,7 +57,7 @@ NOT DONE: Mahmoud walking through the tests (7.5), demo data, slides. Optional l
 1. Bug fixes and frontend checks. **Frontend freeze Wed 18.**
 2. **Demo data + slides** (Thu 19). Rehearsal Fri 20. Note: the demo DB ticket "Search returns duplicate products" is now Reopened (used for testing the stepper).
 
-`docs/CODE_GUIDE.md` explains every file in simple words. `docs/code-walkthrough/` (6 chapters + README) shows the real code of every file with line-by-line explanations and committee Q&A. Keep both updated after each feature: when code changes, update the copied code and the "Line N" references in the matching chapter.
+`docs/STUDY_GUIDE.md` is Mahmoud's study plan until Nov 21 (React in .NET terms, non-code topics, demo script, self-quiz); when he says "quiz me on part X", ask fresh questions, not the ones in the file. `docs/CODE_GUIDE.md` explains every file in simple words. `docs/code-walkthrough/` (6 chapters + README) shows the real code of every file with line-by-line explanations and committee Q&A. Keep both updated after each feature: when code changes, update the copied code and the "Line N" references in the matching chapter.
 
 Open items:
 - **Not tested:** `Add-Migration` with the startup key check (the `dotnet ef` CLI isn't installed, so confirm in Package Manager Console at the next migration; none planned before the presentation).

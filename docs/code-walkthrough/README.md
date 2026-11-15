@@ -5,6 +5,7 @@ This walkthrough explains the **actual code** of Mizan, file by file. For each f
 It sits next to two other documents:
 - [CODE_GUIDE.md](../CODE_GUIDE.md): what every file is for, in plain words, with no code. Start there if you want the big picture fast.
 - [PRESENTATION_NOTES.md](../PRESENTATION_NOTES.md): talking points per feature for the slides.
+- [STUDY_GUIDE.md](../STUDY_GUIDE.md): React explained in .NET terms, the study plan until the presentation, the non-code topics, a demo script and a self-quiz.
 
 ## Chapters
 
