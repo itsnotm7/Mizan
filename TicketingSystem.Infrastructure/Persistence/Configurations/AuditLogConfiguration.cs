@@ -12,7 +12,7 @@ namespace TicketingSystem.Infrastructure.Persistence.Configurations
             builder.Property(a => a.IpAddress).HasMaxLength(45); // fits IPv6
 
             // No relationships configured on purpose (see AuditLog.cs).
-            // Indexes so "history of ticket X, newest first" stays fast.
+            // Indexes so "history of ticket X, in time order" stays fast.
             builder.HasIndex(a => a.TicketId);
             builder.HasIndex(a => a.CreatedAt);
         }

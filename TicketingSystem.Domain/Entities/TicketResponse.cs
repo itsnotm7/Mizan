@@ -2,7 +2,7 @@ using TicketingSystem.Domain.Enums;
 
 namespace TicketingSystem.Domain.Entities
 {
-    // The answer that goes back to the client: Draft -> Approved -> Sent
+    // The answer that goes back to the client: Draft -> Sent (see ResponseStatus)
     public class TicketResponse : BaseEntity
     {
         public Guid TicketId { get; set; }

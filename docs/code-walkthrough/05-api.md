@@ -381,7 +381,7 @@ namespace TicketingSystem.API.OpenApi
 - Lines 23-29: a document-level security requirement: every operation uses the "Bearer" scheme, so Swagger UI sends the `Authorization` header on every call. The empty list `[]` means "no scopes" (scopes are an OAuth idea we don't use).
 - Line 31: nothing async happens, so it returns a completed task.
 
-Note: the requirement is applied to the whole document, including `POST /api/auth/login`, which is `[AllowAnonymous]`. That is harmless: sending a token to login does not matter. Clicking Authorize in Swagger UI in a browser is still listed as "not tested" in CLAUDE.md.
+Note: the requirement is applied to the whole document, including `POST /api/auth/login`, which is `[AllowAnonymous]`. That is harmless: sending a token to login does not matter. Tested in the browser (Nov 16): after pasting a token into Authorize, Swagger sends `Authorization: Bearer ...` and `GET /api/auth/me` answers 200.
 
 **Committee might ask:**
 - *Q: Is this needed for security?* A: No. It only describes the API for Swagger UI. Security is enforced by JwtBearer and `RequireAuthorization()`.

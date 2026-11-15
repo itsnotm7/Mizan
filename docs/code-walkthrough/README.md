@@ -31,13 +31,13 @@ A **client** creates a ticket with a GitHub repo and commit (the "Before" snapsh
 
 ## Small things the walkthrough noticed (your call)
 
-While writing these chapters, the writers marked a few oddities with "Note:" lines. None of them breaks anything. Know them before the committee does, and decide whether to fix any (each is small) or mention it as future work.
+While writing these chapters, the writers marked a few oddities with "Note:" lines. None of them breaks anything. Know them before the committee does.
 
-**Stale comments and unused things**
-- `ResponseStatus.Approved` is never used: approval goes straight from Draft to Sent. The comment in `TicketResponse` still says Draft → Approved → Sent. *(chapter 1)*
-- The example action names in the `AuditLog.Action` comment ("StatusChanged", "Assigned") don't match what the code writes ("Created" and the workflow action names). *(chapter 1)*
-- The `AuditLogConfiguration` comment says "newest first", but the history comes back oldest first. *(chapter 4)*
-- `Ticket.DueDate`, `ArchivePath`, `IpAddress` and `TicketAssignment.AssignedAt` are never set. `Comment` has a table but no endpoint (comments are cut scope). *(chapter 1)*
+**Fixed (Nov 16):** three stale comments now match the code: the response path is Draft → Sent (`TicketResponse`, `ResponseStatus`), the real `AuditLog.Action` names, and "in time order" in `AuditLogConfiguration`. Comments only, no behaviour change.
+
+**Unused on purpose (say "designed ahead, cut from the MVP")**
+- `ResponseStatus.Approved`: kept for a later "approve now, send later" step. Removing an enum value is riskier than keeping one, because enums are stored as strings. *(chapter 1)*
+- `Ticket.DueDate`, `ArchivePath`, `AuditLog.IpAddress` and `TicketAssignment.AssignedAt` are never set. `Comment` has a table but no endpoint (comments are cut scope). The schema was designed up front so these features need no redesign. *(chapter 1)*
 - `System.Security.Cryptography.Pkcs` in the Infrastructure csproj: still your open decision. *(chapter 4)*
 
 **Design details worth being able to explain**

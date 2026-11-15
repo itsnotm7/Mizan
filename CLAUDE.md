@@ -49,7 +49,9 @@ DONE:
 - Later-step tests (Nov 16): Mahmoud asked Claude to write them. 59 tests pass (all 10 actions + a full-chain test), second mutation check done. Walkthrough 7.5 explains one test of each kind; Mahmoud still needs to walk through it.
 - Logout fix (Nov 16): after a logout, the next account no longer lands on the previous user's page. An expired session shows a message.
 
-NOT DONE: Mahmoud walking through the tests (7.5), cleaning up the oddities in `docs/code-walkthrough/README.md`, demo data, slides. Optional later: a styled confirm dialog instead of `window.confirm`.
+- Small open items (Nov 16): Swagger Authorize tested in the browser (200 on `/me`). `/me` and `/tickets` return 401 for a user deactivated after login (tested with Member Two, reactivated after). Three stale comments fixed (comments only), walkthrough README updated.
+
+NOT DONE: Mahmoud walking through the tests (7.5), demo data, slides. Optional later: a styled confirm dialog instead of `window.confirm`.
 
 ## Next up
 1. Bug fixes and frontend checks. **Frontend freeze Wed 18.**
@@ -58,7 +60,7 @@ NOT DONE: Mahmoud walking through the tests (7.5), cleaning up the oddities in `
 `docs/CODE_GUIDE.md` explains every file in simple words. `docs/code-walkthrough/` (6 chapters + README) shows the real code of every file with line-by-line explanations and committee Q&A. Keep both updated after each feature: when code changes, update the copied code and the "Line N" references in the matching chapter.
 
 Open items:
-- **Not tested:** clicking Authorize in Swagger UI in a browser; `/me` returning 401 for a user deactivated after login; `Add-Migration` with the startup key check (the `dotnet ef` CLI isn't installed, so confirm in Package Manager Console at the next migration).
+- **Not tested:** `Add-Migration` with the startup key check (the `dotnet ef` CLI isn't installed, so confirm in Package Manager Console at the next migration; none planned before the presentation).
 - **Mahmoud to decide:** whether to remove `System.Security.Cryptography.Pkcs` from the Infrastructure csproj. No code uses it, but it may be a deliberate version pin.
 - **Permissions:** `.claude/settings.json` pre-approves `Bash(...)` commands, so PowerShell sessions may still prompt.
 

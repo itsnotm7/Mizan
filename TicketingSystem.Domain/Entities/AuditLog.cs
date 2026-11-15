@@ -8,7 +8,7 @@ namespace TicketingSystem.Domain.Entities
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid? TicketId { get; set; }   // null for non-ticket events (e.g. login)
         public Guid ActorId { get; set; }
-        public string Action { get; set; } = string.Empty; // e.g. "StatusChanged", "Assigned"
+        public string Action { get; set; } = string.Empty; // "Created", a workflow action name ("Route", "Submit"...), "TeamAssigned" or "MemberAssigned"
         public string? OldValue { get; set; }
         public string? NewValue { get; set; }
         public string? IpAddress { get; set; }

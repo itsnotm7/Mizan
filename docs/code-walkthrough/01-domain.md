@@ -357,7 +357,7 @@ using TicketingSystem.Domain.Enums;
 
 namespace TicketingSystem.Domain.Entities
 {
-    // The answer that goes back to the client: Draft -> Approved -> Sent
+    // The answer that goes back to the client: Draft -> Sent (see ResponseStatus)
     public class TicketResponse : BaseEntity
     {
         public Guid TicketId { get; set; }
@@ -388,7 +388,7 @@ namespace TicketingSystem.Domain.Entities
 - Line 22: `SentAt` stays null until the response is really delivered.
 - What the code actually does: `SubmitAsync` creates the draft. `ManagerApproveAsync` sets `Status = Sent`, `ApprovedById` and `SentAt` together. If the leader or manager sends the fix back, the draft is soft-deleted (`IsDeleted = true`), so the next submit starts a fresh one.
 
-Note: The comment on line 5 says `Draft -> Approved -> Sent`, but the code goes straight from `Draft` to `Sent` when the manager approves ("approving is what sends it"). The `Approved` value of `ResponseStatus` is never assigned anywhere.
+Note: a response goes straight from `Draft` to `Sent` when the manager approves ("approving is what sends it"). The `Approved` value of `ResponseStatus` is never assigned; see the comment in `ResponseStatus.cs` for why it is kept.
 
 ---
 
@@ -444,7 +444,7 @@ namespace TicketingSystem.Domain.Entities
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid? TicketId { get; set; }   // null for non-ticket events (e.g. login)
         public Guid ActorId { get; set; }
-        public string Action { get; set; } = string.Empty; // e.g. "StatusChanged", "Assigned"
+        public string Action { get; set; } = string.Empty; // "Created", a workflow action name ("Route", "Submit"...), "TeamAssigned" or "MemberAssigned"
         public string? OldValue { get; set; }
         public string? NewValue { get; set; }
         public string? IpAddress { get; set; }
@@ -459,13 +459,13 @@ namespace TicketingSystem.Domain.Entities
 - Line 8: its own `Id`, defined here because there is no base class.
 - Line 9: `Guid? TicketId` is nullable so the same table could also log events that aren't about a ticket (like a login). Today every row written has a ticket Id. The configuration adds an index on `TicketId` so "history of ticket X" is fast.
 - Line 10: `ActorId`, the user who did it.
-- Line 11: `Action` is a `string`, not the `WorkflowAction` enum. Why: not every action is a workflow step. Ticket creation writes `"Created"` (a constant in `TicketService`), and workflow steps write `action.ToString()`, for example `"Route"` or `"ManagerApprove"`. A string can hold both.
+- Line 11: `Action` is a `string`, not the `WorkflowAction` enum. Why: not every action is a workflow step. Ticket creation writes `"Created"` (a constant in `TicketService`), and workflow steps write `action.ToString()`, for example `"Route"` or `"ManagerApprove"`. Route and Assign also write detail rows, `"TeamAssigned"` and `"MemberAssigned"`. A string can hold all of them.
 - Lines 12-13: `OldValue` and `NewValue` are nullable strings. In the current code they hold the status before and after (`"Submitted"` -> `"Routed"`). For `Created`, `OldValue` is null because there was no status before.
 - Line 14: `IpAddress` (max 45 characters, enough for IPv6).
 - Line 15: `CreatedAt`, when it happened. Indexed, so history sorts quickly.
 - The audit row is added in the **same `SaveChanges`** as the status change, so both are saved together or not at all. You can't have a change without its audit row.
 
-Note: The comment on line 11 gives `"StatusChanged"` and `"Assigned"` as examples, but the code actually writes `"Created"` and the `WorkflowAction` names (`"Route"`, `"Assign"`, ...). `IpAddress` is never filled in yet.
+Note: `IpAddress` is never filled in yet.
 
 **Committee might ask:**
 - *Q: Why no foreign keys on the audit log? Isn't that bad design?* A: It's deliberate. An audit log must outlive the data it describes. With foreign keys, deleting a user would be blocked by the log or would remove the log. Plain Ids keep history independent. We trade database-enforced integrity for durability, and the Ids are always written by our own code in the same transaction.
@@ -547,6 +547,8 @@ using System.Text;
 
 namespace TicketingSystem.Domain.Enums
 {
+    // Today a response goes Draft -> Sent: the manager's approval sends it straight away.
+    // Approved is kept for a future "approve now, send later" step, and so stored values never break.
     public enum ResponseStatus
     {
         Draft, Approved, Sent
@@ -576,7 +578,7 @@ namespace TicketingSystem.Domain.Enums
 - **`TicketStatus`**: every state a ticket can be in. The normal path is `Submitted -> Routed -> InProgress -> LeaderReview -> ManagerReview -> ResponseSent -> Closed`. Side paths: `Submitted -> Rejected` (manager refuses it), `LeaderReview` or `ManagerReview -> InProgress` (sent back), `ResponseSent -> Reopened -> InProgress` (client not happy, leader assigns again). `Closed` and `Rejected` are the end states. The enum only lists the states; which moves are allowed is in `TicketWorkflow` (chapter 3).
 - **`Priority`**: four levels. `Medium` is the default on `Ticket`.
 - **`SnapshotKind`**: `Before` (the client's code when submitting) or `After` (a member's fix).
-- **`ResponseStatus`**: `Draft` when a member submits, `Sent` when the manager approves. `Approved` is in the list but not used by the current code (see the note under `TicketResponse`).
+- **`ResponseStatus`**: `Draft` when a member submits, `Sent` when the manager approves. `Approved` is in the list but not used by the current code; the comment above the enum says why it stays: a later "approve now, send later" step could use it, and removing a value is riskier than keeping one, because enums are stored as strings in the database.
 - **`WorkflowAction`**: one name per button in the workflow, ten in total. Each is a key in the `TicketWorkflow` rules table, and each has its own endpoint (`POST /api/tickets/{id}/<step>`). Its `ToString()` is what goes in `AuditLog.Action` and in the `allowedActions` list the frontend uses to decide which buttons to show. It lives in Domain (not Application) because it is a pure name list with no logic, used by the rules, the audit log and the DTOs.
 - **How they are stored:** every enum column is configured with `.HasConversion<string>()`, so SQL Server stores `"TeamLeader"` and `"InProgress"`, not `2` and `2`. This makes the data readable in SSMS, and inserting a new value in the middle of an enum can't silently change the meaning of old rows (with numbers, adding a value before `TeamLeader` would turn every stored `2` into a different role).
 

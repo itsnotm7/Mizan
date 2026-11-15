@@ -601,7 +601,7 @@ namespace TicketingSystem.Infrastructure.Persistence.Configurations
             builder.Property(a => a.IpAddress).HasMaxLength(45); // fits IPv6
 
             // No relationships configured on purpose (see AuditLog.cs).
-            // Indexes so "history of ticket X, newest first" stays fast.
+            // Indexes so "history of ticket X, in time order" stays fast.
             builder.HasIndex(a => a.TicketId);
             builder.HasIndex(a => a.CreatedAt);
         }
@@ -610,13 +610,13 @@ namespace TicketingSystem.Infrastructure.Persistence.Configurations
 ```
 
 **Line by line:**
-- Line 11: `Action` (like `"StatusChanged"`, `"MemberAssigned"`) up to 100 characters, required.
+- Line 11: `Action` (like `"Route"`, `"MemberAssigned"`) up to 100 characters, required.
 - Line 12: `IpAddress` up to 45 characters, the longest text form of an IPv6 address.
 - Line 14: no `HasOne(...)` here. The `AuditLog` entity has plain `Guid` ids (`TicketId`, `ActorId`) and no navigation properties, so EF creates **no foreign keys**. The history must survive even if the ticket or user it mentions is removed later. With an FK plus Restrict, you could never remove that row; with cascade, you would lose history.
 - Lines 16-17: indexes on `TicketId` and `CreatedAt`, because the history endpoint asks "all rows for ticket X, ordered by time".
 - `OldValue` and `NewValue` are not configured, so they are nullable `nvarchar(max)` by convention.
 
-Note: the comment says "newest first", but `GetAuditLogsAsync` in `TicketRepository` orders by `CreatedAt` ascending (oldest first). The index serves both directions, so it is only a wording mismatch.
+Note: `GetAuditLogsAsync` in `TicketRepository` orders by `CreatedAt` ascending (oldest first). A database index can be read in either direction, so the same index would also serve "newest first".
 
 **Committee might ask:**
 - *An audit log without foreign keys? Isn't that bad design?* It is a deliberate trade-off. An audit log is a permanent record. It must never block a delete or be deleted with its parent. Integrity comes from the code: only the workflow writes these rows, inside the same save as the change they describe.
