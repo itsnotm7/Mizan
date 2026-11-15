@@ -38,7 +38,7 @@ While writing these chapters, the writers marked a few oddities with "Note:" lin
 **Unused on purpose (say "designed ahead, cut from the MVP")**
 - `ResponseStatus.Approved`: kept for a later "approve now, send later" step. Removing an enum value is riskier than keeping one, because enums are stored as strings. *(chapter 1)*
 - `Ticket.DueDate`, `ArchivePath`, `AuditLog.IpAddress` and `TicketAssignment.AssignedAt` are never set. `Comment` has a table but no endpoint (comments are cut scope). The schema was designed up front so these features need no redesign. *(chapter 1)*
-- `System.Security.Cryptography.Pkcs` in the Infrastructure csproj: still your open decision. *(chapter 4)*
+- `System.Security.Cryptography.Pkcs` in the Infrastructure csproj is **not** unused by accident. It's a security pin that overrides a vulnerable version (9.0.11) pulled in by the SQL Server driver. Removing it brings back 8 vulnerability warnings, so it stays. *(chapter 4)*
 
 **Design details worth being able to explain**
 - `JwtOptions` is read by hand (not `IOptions<T>`), and its startup check runs twice. Harmless. *(chapters 4, 5)*

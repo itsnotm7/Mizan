@@ -61,7 +61,7 @@ NOT DONE: Mahmoud walking through the tests (7.5), demo data, slides. Optional l
 
 Open items:
 - **Not tested:** `Add-Migration` with the startup key check (the `dotnet ef` CLI isn't installed, so confirm in Package Manager Console at the next migration; none planned before the presentation).
-- **Mahmoud to decide:** whether to remove `System.Security.Cryptography.Pkcs` from the Infrastructure csproj. No code uses it, but it may be a deliberate version pin.
+- **Decided (Nov 16):** `System.Security.Cryptography.Pkcs` stays. It's a security pin: without it the SQL Server driver brings in the vulnerable 9.0.11 (NU1903). Mahmoud chose "remove", the build showed why it's needed, and it was put back with a comment.
 - **Permissions:** `.claude/settings.json` pre-approves `Bash(...)` commands, so PowerShell sessions may still prompt.
 
 ## The plan (presentation Sat Nov 21)

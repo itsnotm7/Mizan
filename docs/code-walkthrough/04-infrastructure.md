@@ -62,6 +62,9 @@ Infrastructure is the layer that talks to the outside world: the SQL Server data
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.2" />
+    <!-- Not used by our code: a security pin. EF Core's SQL Server driver pulls in Pkcs 9.0.11,
+         which has known vulnerabilities (GHSA-846f-f764-76mx, GHSA-2fmv-rv2c-59x7).
+         Listing it here forces the fixed version. Removing it brings back NU1903 warnings. -->
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 
@@ -80,7 +83,9 @@ Infrastructure is the layer that talks to the outside world: the SQL Server data
 - `Microsoft.EntityFrameworkCore.SqlServer`: the EF Core provider that turns LINQ into SQL Server SQL. `EntityFrameworkCore`, `.Relational` and `.Abstractions` are also listed by name.
 - `.Design` and `.Tools` with `PrivateAssets all`: needed only at design time for `Add-Migration` and `Update-Database` in Package Manager Console. `PrivateAssets all` means they do not flow to the API project as a runtime dependency.
 - `Microsoft.IdentityModel.JsonWebTokens 8.19.2`: gives us `JsonWebTokenHandler` to create tokens. The version matches the one `JwtBearer` 10.0.13 uses in the API, so both sides use the same library.
-- `System.Security.Cryptography.Pkcs`: no code in this project uses it. **Open question for Mahmoud:** remove it, or keep it if it is a deliberate version pin.
+- `System.Security.Cryptography.Pkcs`: no code in this project uses it. It is a **security pin**. The SQL Server driver depends on an older Pkcs (9.0.11) that has two published vulnerabilities. Naming the package directly makes NuGet use 10.0.13 instead, because a direct reference wins over a transitive one. We tested it on Nov 16: removing the line brings back 8 `NU1903`/`NU1902` "known vulnerability" warnings.
+
+**Committee might ask: "Why is there a package nobody uses?"** It isn't for our code. It overrides a vulnerable version that EF Core's SQL Server driver would otherwise bring in. `dotnet list package --vulnerable --include-transitive` shows no vulnerable packages with it, and a high-severity one without it.
 - `ProjectReference` to Application only: Infrastructure points inward to Application (and through it to Domain). Nothing points back at Infrastructure, except the API, which wires it up.
 
 Note: `.Relational` and `.Abstractions` already come in through `.SqlServer`, so listing them is not strictly needed. It does no harm. CLAUDE.md says to keep `.Abstractions` in Domain on purpose.
