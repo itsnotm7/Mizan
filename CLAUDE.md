@@ -44,11 +44,13 @@ DONE:
 
 - Unit tests (Nov 15): `TicketingSystem.Tests`, 34 tests pass (Route/Reject/Assign, AllowedActions, Visibility), mutation check done. Mahmoud is writing the later-step tests in `TicketWorkflowLaterStepsTests.cs`; review them when he's done. Walkthrough chapter 7.
 
-NOT DONE: Mahmoud's later-step tests, cleaning up the oddities in `docs/code-walkthrough/README.md`, visual polish ("decoration", Mahmoud's call to do it later), demo data, slides.
+- Visual polish (Nov 16): navy + gold theme in `index.css` (Bootstrap CSS variables, no Sass), `bootstrap-icons` + `@fontsource/inter`/`cairo` (bundled, works offline), `Logo`, split login page, display-only `WorkflowStepper` on ticket details, `HistoryList` as a timeline, icons on actions. Checked in the browser (full chain, Rejected, Reopened, Closed, 375px). Code review done, walkthrough chapter 6 updated.
+
+NOT DONE: Mahmoud's later-step tests, cleaning up the oddities in `docs/code-walkthrough/README.md`, demo data, slides. Optional later: a styled confirm dialog instead of `window.confirm`.
 
 ## Next up
-1. **Visual polish** when Mahmoud wants it (plan mode first).
-2. **Demo data + slides** (Thu 19). Rehearsal Fri 20.
+1. Mahmoud's later-step tests; bug fixes. **Frontend freeze Wed 18.**
+2. **Demo data + slides** (Thu 19). Rehearsal Fri 20. Note: the demo DB ticket "Search returns duplicate products" is now Reopened (used for testing the stepper).
 
 `docs/CODE_GUIDE.md` explains every file in simple words. `docs/code-walkthrough/` (6 chapters + README) shows the real code of every file with line-by-line explanations and committee Q&A. Keep both updated after each feature: when code changes, update the copied code and the "Line N" references in the matching chapter.
 

@@ -103,6 +103,19 @@ An httpOnly cookie instead of sessionStorage, refresh tokens, TypeScript, and pa
 
 A styled confirm dialog, a reason text when rejecting or sending back, live updates when someone else changes the ticket (SignalR), and comments.
 
+## React app: visual polish
+
+- **What it does:** a navy + gold theme (the gold balance scale is the meaning of "Mizan"), a progress stepper at the top of every ticket, the history as a timeline with an icon per step, icons on every button, and a login page with a branded side panel.
+- **Theme without Sass:** Bootstrap 5 reads its colours from CSS variables. `index.css` overrides `--bs-primary` and the button variables, so every existing `btn-primary`, link and badge turned navy without touching the JSX or adding a Sass build step.
+- **Works offline:** icons (`bootstrap-icons`) and fonts (`@fontsource/inter`, `@fontsource/cairo` for the Arabic) come from npm and are bundled, not loaded from Google. The demo looks the same with no internet.
+- **The stepper is display-only:** it reads `ticket.status` and draws it. Which buttons a user gets still comes from `allowedActions`, computed by `TicketWorkflow` on the server.
+
+### Likely committee questions
+
+- **Doesn't the stepper repeat the workflow rules in the frontend?** No. It only knows the order of the happy path, to draw it. It never decides what's allowed. If the stepper were wrong, the server would still refuse a wrong step with a 409.
+- **How does it show the odd cases?** A rejected ticket shows Submitted, then a red "Rejected" step. A reopened ticket goes back to the team, so it sits on the In Progress step, labelled "Reopened" in red.
+- **Does it work on a phone?** Yes. The login side panel hides on small screens and the stepper scrolls sideways inside its card. We checked at 375 px wide: the page doesn't scroll sideways.
+
 ## Automated tests (xUnit)
 
 - **What it does:** `TicketingSystem.Tests` checks the rules table (`TicketWorkflow`) and the visibility rule (`TicketVisibility`). For every action there are three kinds of test: the right person at the right status succeeds, the wrong person gets Forbidden (403), and the right person at the wrong status gets Conflict (409). Run with `dotnet test` or Visual Studio's Test Explorer. All of them run in under a second.

@@ -1,14 +1,245 @@
-/* Bootstrap does most of the work; these are the few extras it doesn't cover */
+/* Mizan theme. Bootstrap does the layout; this file only re-colours it and adds
+   the few pieces Bootstrap doesn't have (stepper, timeline, login panel).
+   Bootstrap 5 reads its colours from CSS variables, so overriding them here
+   re-themes every btn-primary / text-primary / link without Sass or a build step. */
 
-body {
-  background-color: #f5f6f8;
+:root {
+  --mizan-navy: #1b2a41;
+  --mizan-navy-light: #2c4366;
+  --mizan-navy-dark: #121d2e;
+  --mizan-gold: #c9a227;
+  --mizan-gold-light: #f5ecd0;
+  --mizan-bg: #f4f5f7;
+
+  --bs-primary: var(--mizan-navy);
+  --bs-primary-rgb: 27, 42, 65; /* same as --mizan-navy; Bootstrap needs the r,g,b form for opacity */
+  --bs-link-color: var(--mizan-navy-light);
+  --bs-link-color-rgb: 44, 67, 102;
+  --bs-link-hover-color: var(--mizan-navy);
+  --bs-link-hover-color-rgb: 27, 42, 65;
+  --bs-body-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --bs-focus-ring-color: rgba(201, 162, 39, 0.35); /* keyboard focus outline in gold, not Bootstrap blue */
+  --bs-border-radius: 0.5rem;
 }
 
-.login-card {
-  max-width: 420px;
+body {
+  background-color: var(--mizan-bg);
+}
+
+/* Buttons keep their colours in their own variables, so they need overriding too */
+.btn-primary {
+  --bs-btn-bg: var(--mizan-navy);
+  --bs-btn-border-color: var(--mizan-navy);
+  --bs-btn-hover-bg: var(--mizan-navy-light);
+  --bs-btn-hover-border-color: var(--mizan-navy-light);
+  --bs-btn-active-bg: var(--mizan-navy-dark);
+  --bs-btn-active-border-color: var(--mizan-navy-dark);
+  --bs-btn-disabled-bg: var(--mizan-navy);
+  --bs-btn-disabled-border-color: var(--mizan-navy);
+  --bs-btn-focus-shadow-rgb: 201, 162, 39;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--mizan-navy);
+  --bs-btn-border-color: var(--mizan-navy);
+  --bs-btn-hover-bg: var(--mizan-navy);
+  --bs-btn-hover-border-color: var(--mizan-navy);
+  --bs-btn-active-bg: var(--mizan-navy-dark);
+  --bs-btn-active-border-color: var(--mizan-navy-dark);
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: var(--mizan-gold);
+  box-shadow: 0 0 0 0.2rem rgba(201, 162, 39, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: var(--mizan-navy);
+  border-color: var(--mizan-navy);
+}
+
+/* ---------- Brand ---------- */
+
+.brand-ar {
+  font-family: 'Cairo', sans-serif;
+  color: var(--mizan-gold);
+  font-weight: 600;
+}
+
+.navbar-mizan {
+  background-color: var(--mizan-navy);
+  border-bottom: 3px solid var(--mizan-gold);
+}
+
+.role-badge {
+  border: 1px solid var(--mizan-gold);
+  color: var(--mizan-gold);
+  background: transparent;
+  font-weight: 500;
+}
+
+/* ---------- Cards ---------- */
+
+.card {
+  border: none;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #eef0f3;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5b6573;
+}
+
+.card-actions {
+  border-top: 3px solid var(--mizan-gold);
+}
+
+.page-title {
+  color: var(--mizan-navy);
+  font-weight: 700;
 }
 
 /* Lets a whole table row act as a link to the ticket */
 .row-link {
   cursor: pointer;
+}
+
+.table > thead th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5b6573;
+}
+
+.empty-state {
+  padding: 3rem 1rem;
+  color: #6c757d;
+}
+
+.empty-state .bi {
+  font-size: 2.5rem;
+  color: #c3c8d0;
+}
+
+/* ---------- Login ---------- */
+
+.login-shell {
+  max-width: 900px;
+  overflow: hidden;
+}
+
+.login-panel {
+  background: linear-gradient(160deg, var(--mizan-navy) 0%, var(--mizan-navy-dark) 100%);
+  color: #fff;
+}
+
+.login-panel .bi {
+  color: var(--mizan-gold);
+}
+
+/* ---------- Workflow stepper ---------- */
+
+.stepper {
+  display: flex;
+  list-style: none;
+  padding: 6px 0 2px; /* room for the gold halo: overflow-x also clips top and bottom */
+  margin: 0;
+  overflow-x: auto; /* on a phone the steps scroll sideways instead of squashing */
+}
+
+.stepper-step {
+  flex: 1 0 90px;
+  position: relative;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b7480; /* dark enough to stay readable (WCAG AA) on white */
+}
+
+/* The line between two dots: drawn from each step back to the previous one */
+.stepper-step:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: #dfe3e8;
+  z-index: 0;
+}
+
+.stepper-dot {
+  position: relative;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 0.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 2px solid #dfe3e8;
+  font-weight: 600;
+}
+
+.stepper-step.done { color: var(--mizan-navy); }
+.stepper-step.done .stepper-dot { background: var(--mizan-navy); border-color: var(--mizan-navy); color: #fff; }
+.stepper-step.done::before,
+.stepper-step.current::before,
+.stepper-step.failed::before { background: var(--mizan-navy); }
+
+.stepper-step.current { color: var(--mizan-navy); font-weight: 600; }
+.stepper-step.current .stepper-dot {
+  border-color: var(--mizan-gold);
+  background: var(--mizan-gold-light);
+  color: var(--mizan-navy);
+  box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.2);
+}
+
+.stepper-step.failed { color: var(--bs-danger); font-weight: 600; }
+.stepper-step.failed .stepper-dot { background: var(--bs-danger); border-color: var(--bs-danger); color: #fff; }
+
+/* ---------- History timeline ---------- */
+
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.timeline-item {
+  position: relative;
+  padding: 0.6rem 0 0.6rem 2.25rem;
+}
+
+/* The vertical line, stopping at the last item */
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 1.6rem;
+  bottom: -0.6rem;
+  width: 2px;
+  background: #e4e7eb;
+}
+
+.timeline-icon {
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
 }

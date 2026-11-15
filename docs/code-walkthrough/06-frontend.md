@@ -4,27 +4,29 @@ The frontend lives in `mizan-web/`. It is a **single-page application (SPA)**: t
 
 | File | One line |
 |---|---|
-| [package.json](../../mizan-web/package.json) | The project file: dependencies (React, React Router, Bootstrap, Vite) and npm scripts. |
+| [package.json](../../mizan-web/package.json) | The project file: dependencies (React, React Router, Bootstrap, Bootstrap Icons, fonts, Vite) and npm scripts. |
 | [vite.config.js](../../mizan-web/vite.config.js) | Dev server settings: port 5173 and the `/api` proxy to the backend on 5199. |
 | [index.html](../../mizan-web/index.html) | The one HTML page. Has an empty `<div id="root">` that React fills. |
-| [src/main.jsx](../../mizan-web/src/main.jsx) | The entry point: starts React inside `#root`, wraps the app in the router and the auth provider. |
+| [src/main.jsx](../../mizan-web/src/main.jsx) | The entry point: loads the CSS, icons and fonts, starts React inside `#root`, wraps the app in the router and the auth provider. |
 | [src/App.jsx](../../mizan-web/src/App.jsx) | The route table: which URL shows which page, and which pages need a login. |
-| [src/index.css](../../mizan-web/src/index.css) | The few CSS rules Bootstrap doesn't cover. |
+| [src/index.css](../../mizan-web/src/index.css) | The Mizan theme (navy and gold) on top of Bootstrap, plus the stepper, timeline and login styles. |
 | [src/api/client.js](../../mizan-web/src/api/client.js) | The one `api()` function every page uses to call the backend, plus `ApiError` and the token store. |
 | [src/auth/AuthContext.jsx](../../mizan-web/src/auth/AuthContext.jsx) | Shares "who is logged in" with every component; login, logout, `/me` check after a refresh. |
 | [src/auth/RequireAuth.jsx](../../mizan-web/src/auth/RequireAuth.jsx) | Guard: shows the page only to a logged-in user, otherwise sends them to `/login`. |
 | [src/components/Layout.jsx](../../mizan-web/src/components/Layout.jsx) | The navbar around every logged-in page. |
-| [src/pages/LoginPage.jsx](../../mizan-web/src/pages/LoginPage.jsx) | Login form with one-click demo account buttons. |
+| [src/components/Logo.jsx](../../mizan-web/src/components/Logo.jsx) | The Mizan logo: a balance scale drawn in SVG, next to the name. |
+| [src/pages/LoginPage.jsx](../../mizan-web/src/pages/LoginPage.jsx) | Login page: a navy side panel with the logo and highlights, and the form with one-click demo account buttons. |
 | [src/pages/TicketsPage.jsx](../../mizan-web/src/pages/TicketsPage.jsx) | The ticket list (already filtered by role on the server). |
 | [src/pages/CreateTicketPage.jsx](../../mizan-web/src/pages/CreateTicketPage.jsx) | The new-ticket form (clients only), with server errors shown per field. |
-| [src/pages/TicketDetailsPage.jsx](../../mizan-web/src/pages/TicketDetailsPage.jsx) | One ticket: details, snapshots, responses, action buttons, history. |
+| [src/pages/TicketDetailsPage.jsx](../../mizan-web/src/pages/TicketDetailsPage.jsx) | One ticket: progress stepper, details, snapshots, responses, action buttons, history. |
 | [src/components/ticket/ActionsPanel.jsx](../../mizan-web/src/components/ticket/ActionsPanel.jsx) | Draws one button or form per entry in the server's `allowedActions`. |
 | [src/components/ticket/RouteForm.jsx](../../mizan-web/src/components/ticket/RouteForm.jsx) | Manager picks a team. |
 | [src/components/ticket/AssignForm.jsx](../../mizan-web/src/components/ticket/AssignForm.jsx) | Leader ticks team members to assign. |
 | [src/components/ticket/SubmitFixForm.jsx](../../mizan-web/src/components/ticket/SubmitFixForm.jsx) | Member enters branch, commit SHA and summary of the fix. |
-| [src/components/ticket/HistoryList.jsx](../../mizan-web/src/components/ticket/HistoryList.jsx) | Shows the audit log entries. |
-| [src/workflow/actions.js](../../mizan-web/src/workflow/actions.js) | How each workflow action looks: URL path, label, colour, form, confirm text. |
-| [src/utils/labels.js](../../mizan-web/src/utils/labels.js) | Display helpers: colours, "LeaderReview" to "Leader Review", date formatting. |
+| [src/components/ticket/WorkflowStepper.jsx](../../mizan-web/src/components/ticket/WorkflowStepper.jsx) | The progress bar of steps that shows where the ticket is in the workflow (display only). |
+| [src/components/ticket/HistoryList.jsx](../../mizan-web/src/components/ticket/HistoryList.jsx) | Shows the audit log entries as a timeline. |
+| [src/workflow/actions.js](../../mizan-web/src/workflow/actions.js) | How each workflow action looks: URL path, label, colour, icon, form, confirm text. |
+| [src/utils/labels.js](../../mizan-web/src/utils/labels.js) | Display helpers: colours, icons, "LeaderReview" to "Leader Review", date formatting. |
 | [src/utils/fieldErrors.js](../../mizan-web/src/utils/fieldErrors.js) | Reads the API's per-field validation errors. |
 
 ---
@@ -48,7 +50,10 @@ The frontend lives in `mizan-web/`. It is a **single-page application (SPA)**: t
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/cairo": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
     "bootstrap": "^5.3.9",
+    "bootstrap-icons": "^1.13.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.18.5"
@@ -76,12 +81,16 @@ The frontend lives in `mizan-web/`. It is a **single-page application (SPA)**: t
   - `react-dom`: draws React components into the browser's page (the DOM).
   - `react-router-dom`: React Router 7, the client-side routing (URL to page).
   - `bootstrap`: Bootstrap 5, a CSS library. We only use its CSS classes, not its JavaScript.
+  - `bootstrap-icons`: the official Bootstrap icon set, as a font. You draw an icon with `<i className="bi bi-github"></i>`.
+  - `@fontsource/inter` and `@fontsource/cairo`: two fonts packaged as npm files. Inter is the main text font; Cairo is an Arabic font used only for the word "ميزان" in the logo. The `@` part is the publisher's **scope** (like a NuGet package prefix); it is just part of the name.
+- Line 13-16: the three new packages from the visual polish. npm keeps `dependencies` in alphabetical order, which is why the `@` names come first.
 - `devDependencies`: tools needed only while developing or building: Vite (the dev server and bundler), the Vite React plugin, ESLint with React rules, and type definitions that help the editor's IntelliSense.
 - The `^` means "this version or any newer minor/patch version". The exact installed versions are locked in `package-lock.json`.
 
 **Committee might ask:**
 - *Why Vite and not Create React App?* Create React App is deprecated. Vite starts in under a second and reloads instantly on save.
 - *Why plain JavaScript and not TypeScript?* Time. The project has one week of frontend work. The server validates everything anyway, so the risk of untyped data on the client is small. TypeScript is listed as future work.
+- *Why bundled fonts instead of Google Fonts?* So the demo works offline. The font files are installed with npm and served by our own app, so a bad Wi-Fi connection in the presentation room can't change how the app looks. It also means no request goes to a third party.
 
 ---
 
@@ -165,7 +174,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import './index.css'
+import 'bootstrap-icons/font/bootstrap-icons.css'
+// Fonts come from npm instead of Google Fonts, so the app still looks right with no internet
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
+import '@fontsource/cairo/600.css'
+import './index.css' // last, so the theme overrides Bootstrap
 import App from './App.jsx'
 import { AuthProvider } from './auth/AuthContext.jsx'
 
@@ -182,13 +198,16 @@ createRoot(document.getElementById('root')).render(
 ```
 
 **Line by line:**
-- Line 1-7: imports. `{ StrictMode }` in curly braces is a **named import** (the file exports many things, we take one). `App` without braces is the file's **default export**. Line 4-5 import CSS files: Vite injects them into the page. Bootstrap's CSS comes first, so our own `index.css` can override it.
-- Line 9: find the empty `<div id="root">` from `index.html` and tell React to draw into it.
-- Line 10-17: this is **JSX**: HTML-like syntax inside JavaScript. `<App />` means "call the `App` component here". JSX is turned into normal function calls at build time. Nested tags wrap each other, like middleware layers in `Program.cs`:
+- Line 1-14: imports. `{ StrictMode }` in curly braces is a **named import** (the file exports many things, we take one). `App` without braces is the file's **default export**. Line 4-12 import CSS files: Vite injects them into the page.
+- Line 5: the Bootstrap Icons stylesheet. It defines one class per icon (`bi-github`, `bi-lock`, ...) and loads the icon font.
+- Line 7-11: the fonts. Each file is one **weight** (thickness): 400 normal, 500 medium, 600 semi-bold, 700 bold. We import only the weights the app uses, so the browser doesn't download the rest. Cairo is only needed in 600, for the Arabic name in the logo.
+- Line 12: our `index.css` comes **last**. When two CSS rules are equally specific, the later one wins, so our navy/gold theme overrides Bootstrap's default blue.
+- Line 16: find the empty `<div id="root">` from `index.html` and tell React to draw into it.
+- Line 17-24: this is **JSX**: HTML-like syntax inside JavaScript. `<App />` means "call the `App` component here". JSX is turned into normal function calls at build time. Nested tags wrap each other, like middleware layers in `Program.cs`:
   - `StrictMode`: a development-only checker. It warns about unsafe code and, importantly, **runs every effect twice** in development (mount, unmount, mount again) to expose effects that don't clean up after themselves. This is why the pages cancel their requests in a cleanup function (see `TicketsPage`). It does nothing in a production build.
   - `BrowserRouter`: turns on React Router. It reads the URL from the browser's address bar and lets components change it without a page reload.
   - `AuthProvider`: shares the logged-in user with every component below it (see `AuthContext.jsx`).
-- Line 12: `{/* ... */}` is how you write a comment inside JSX.
+- Line 19: `{/* ... */}` is how you write a comment inside JSX.
 - Why `AuthProvider` is inside `BrowserRouter`: `AuthProvider` uses `useNavigate()` to go to `/login` on logout, and that hook only works inside a router.
 
 **Committee might ask:**
@@ -244,33 +263,319 @@ export default function App() {
 
 ## [index.css](../../mizan-web/src/index.css)
 
-**What it is:** The only custom CSS. Bootstrap does almost all the styling.
+**What it is:** The only custom CSS: the Mizan theme. Bootstrap still does the layout (grid, spacing, forms, tables). This file re-colours Bootstrap in navy and gold, and adds the three pieces Bootstrap doesn't have: the workflow stepper, the history timeline and the login side panel. It is long, but it is plain CSS with no logic, so it is split into labelled parts below.
 
-**The code:**
+**The code (part 1: theme colours and Bootstrap overrides):**
 
 ```css
-/* Bootstrap does most of the work; these are the few extras it doesn't cover */
+/* Mizan theme. Bootstrap does the layout; this file only re-colours it and adds
+   the few pieces Bootstrap doesn't have (stepper, timeline, login panel).
+   Bootstrap 5 reads its colours from CSS variables, so overriding them here
+   re-themes every btn-primary / text-primary / link without Sass or a build step. */
 
-body {
-  background-color: #f5f6f8;
+:root {
+  --mizan-navy: #1b2a41;
+  --mizan-navy-light: #2c4366;
+  --mizan-navy-dark: #121d2e;
+  --mizan-gold: #c9a227;
+  --mizan-gold-light: #f5ecd0;
+  --mizan-bg: #f4f5f7;
+
+  --bs-primary: var(--mizan-navy);
+  --bs-primary-rgb: 27, 42, 65; /* same as --mizan-navy; Bootstrap needs the r,g,b form for opacity */
+  --bs-link-color: var(--mizan-navy-light);
+  --bs-link-color-rgb: 44, 67, 102;
+  --bs-link-hover-color: var(--mizan-navy);
+  --bs-link-hover-color-rgb: 27, 42, 65;
+  --bs-body-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --bs-focus-ring-color: rgba(201, 162, 39, 0.35); /* keyboard focus outline in gold, not Bootstrap blue */
+  --bs-border-radius: 0.5rem;
 }
 
-.login-card {
-  max-width: 420px;
+body {
+  background-color: var(--mizan-bg);
+}
+
+/* Buttons keep their colours in their own variables, so they need overriding too */
+.btn-primary {
+  --bs-btn-bg: var(--mizan-navy);
+  --bs-btn-border-color: var(--mizan-navy);
+  --bs-btn-hover-bg: var(--mizan-navy-light);
+  --bs-btn-hover-border-color: var(--mizan-navy-light);
+  --bs-btn-active-bg: var(--mizan-navy-dark);
+  --bs-btn-active-border-color: var(--mizan-navy-dark);
+  --bs-btn-disabled-bg: var(--mizan-navy);
+  --bs-btn-disabled-border-color: var(--mizan-navy);
+  --bs-btn-focus-shadow-rgb: 201, 162, 39;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--mizan-navy);
+  --bs-btn-border-color: var(--mizan-navy);
+  --bs-btn-hover-bg: var(--mizan-navy);
+  --bs-btn-hover-border-color: var(--mizan-navy);
+  --bs-btn-active-bg: var(--mizan-navy-dark);
+  --bs-btn-active-border-color: var(--mizan-navy-dark);
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: var(--mizan-gold);
+  box-shadow: 0 0 0 0.2rem rgba(201, 162, 39, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: var(--mizan-navy);
+  border-color: var(--mizan-navy);
+}
+```
+
+**Line by line:**
+- Line 6: **`:root`** means "the whole page" (the `<html>` element). Variables defined here are visible everywhere.
+- Line 7-12: our own **CSS variables** (custom properties). A name starting with `--` holds a value, and `var(--mizan-navy)` reads it. They work like constants in C#: the navy colour is written once, and every rule uses the name. Changing the brand colour means changing one line.
+- Line 14-22: the trick that makes the theme small. Bootstrap 5 does not hard-code its colours; it reads them from its own variables (`--bs-primary`, `--bs-link-color`, ...). By setting those variables to our navy, every `btn-primary`, `text-primary`, `bg-primary` and link in the app turns navy, without rebuilding Bootstrap from its Sass source.
+- Line 15: Bootstrap also needs the colour as three numbers (red, green, blue) so it can make see-through versions (for example `bg-primary bg-opacity-25`). `27, 42, 65` is the same navy as `#1b2a41`, written in decimal.
+- Line 20: the main font is Inter (loaded in `main.jsx`). The names after it are **fallbacks**: if Inter can't load, the browser tries the next one.
+- Line 21: the **focus ring**: the outline Bootstrap draws around a link or button when you reach it with the Tab key. Gold instead of blue, so it matches the theme. `rgba(201, 162, 39, 0.35)` is the gold at 35% opacity. Keyboard users need this outline to see where they are, so we re-colour it, never remove it.
+- Line 22: slightly rounder corners on cards, buttons and inputs.
+- Line 25-27: a light grey page background, so the white cards stand out.
+- Line 30-49: buttons keep their colours in **their own** variables (`--bs-btn-bg`, `--bs-btn-hover-bg`, ...), set on the `.btn-primary` class itself, so the `:root` change doesn't reach them. We set them here: navy normally, a lighter navy on hover, a darker navy while pressed. Line 39 makes the glow around a focused primary button gold too (again as r, g, b numbers).
+- Line 51-56: when an input has focus (the cursor is in it), its border and glow turn gold instead of Bootstrap's blue. `rgba(201, 162, 39, 0.25)` is the gold at 25% opacity.
+- Line 58-61: a ticked checkbox (in `AssignForm`) is filled navy.
+
+**The code (part 2: brand, cards, tables):**
+
+```css
+/* ---------- Brand ---------- */
+
+.brand-ar {
+  font-family: 'Cairo', sans-serif;
+  color: var(--mizan-gold);
+  font-weight: 600;
+}
+
+.navbar-mizan {
+  background-color: var(--mizan-navy);
+  border-bottom: 3px solid var(--mizan-gold);
+}
+
+.role-badge {
+  border: 1px solid var(--mizan-gold);
+  color: var(--mizan-gold);
+  background: transparent;
+  font-weight: 500;
+}
+
+/* ---------- Cards ---------- */
+
+.card {
+  border: none;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #eef0f3;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5b6573;
+}
+
+.card-actions {
+  border-top: 3px solid var(--mizan-gold);
+}
+
+.page-title {
+  color: var(--mizan-navy);
+  font-weight: 700;
 }
 
 /* Lets a whole table row act as a link to the ticket */
 .row-link {
   cursor: pointer;
 }
+
+.table > thead th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5b6573;
+}
+
+.empty-state {
+  padding: 3rem 1rem;
+  color: #6c757d;
+}
+
+.empty-state .bi {
+  font-size: 2.5rem;
+  color: #c3c8d0;
+}
 ```
 
 **Line by line:**
-- `body`: a light grey background, so the white Bootstrap cards stand out.
-- `.login-card`: keeps the login box narrow on wide screens (used in `LoginPage`).
-- `.row-link`: shows the hand cursor over ticket rows, because the whole row is clickable (used in `TicketsPage`).
+- Line 65-69: `.brand-ar` is the Arabic word "ميزان" in the logo: Cairo font, gold, semi-bold. Inter has no Arabic letters, which is why a second font is needed.
+- Line 71-74: the navbar: navy with a thin gold line along the bottom (used in `Layout`).
+- Line 76-81: the role badge in the navbar ("Team Leader"): a gold outline with no fill.
+- Line 85-88: every `.card` loses its grey border and gets a very soft shadow instead. Two shadows separated by a comma are drawn on top of each other.
+- Line 90-98: card headers ("CODE SNAPSHOTS", "HISTORY") become small grey capitals. `text-transform: uppercase` changes only how the text looks; the JSX still says "History".
+- Line 100-102: `.card-actions` gives the "Your actions" card a gold top border, so the eye finds the buttons first.
+- Line 104-107: `.page-title` makes page headings navy and bold.
+- Line 110-112: `.row-link` shows the hand cursor over ticket rows, because the whole row is clickable (used in `TicketsPage`).
+- Line 114-120: table column titles in the same small grey capitals as card headers. `.table > thead th` means "a `th` inside a `thead` that is directly inside a `.table`".
+- Line 122-130: the "No tickets to show yet." box: extra padding and a big light-grey icon. `.empty-state .bi` means "any icon inside an empty-state box".
 
-A quick word on **Bootstrap classes**, since they appear everywhere below: Bootstrap gives ready-made CSS classes you put in `className`. Examples: `btn btn-primary` (a blue button), `card` (a white box), `alert alert-danger` (a red message box), `form-control` (a styled input), `d-flex gap-2` (lay children out in a row with a gap), `mb-3` (margin-bottom size 3), `text-muted` (grey text), `badge text-bg-success` (a small green label), `row` / `col-lg-8` (a 12-column grid: 8 of 12 columns on large screens). In JSX you write `className` instead of `class`, because `class` is a reserved word in JavaScript.
+**The code (part 3: login panel and workflow stepper):**
+
+```css
+/* ---------- Login ---------- */
+
+.login-shell {
+  max-width: 900px;
+  overflow: hidden;
+}
+
+.login-panel {
+  background: linear-gradient(160deg, var(--mizan-navy) 0%, var(--mizan-navy-dark) 100%);
+  color: #fff;
+}
+
+.login-panel .bi {
+  color: var(--mizan-gold);
+}
+
+/* ---------- Workflow stepper ---------- */
+
+.stepper {
+  display: flex;
+  list-style: none;
+  padding: 6px 0 2px; /* room for the gold halo: overflow-x also clips top and bottom */
+  margin: 0;
+  overflow-x: auto; /* on a phone the steps scroll sideways instead of squashing */
+}
+
+.stepper-step {
+  flex: 1 0 90px;
+  position: relative;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b7480; /* dark enough to stay readable (WCAG AA) on white */
+}
+
+/* The line between two dots: drawn from each step back to the previous one */
+.stepper-step:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: #dfe3e8;
+  z-index: 0;
+}
+
+.stepper-dot {
+  position: relative;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 0.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 2px solid #dfe3e8;
+  font-weight: 600;
+}
+
+.stepper-step.done { color: var(--mizan-navy); }
+.stepper-step.done .stepper-dot { background: var(--mizan-navy); border-color: var(--mizan-navy); color: #fff; }
+.stepper-step.done::before,
+.stepper-step.current::before,
+.stepper-step.failed::before { background: var(--mizan-navy); }
+
+.stepper-step.current { color: var(--mizan-navy); font-weight: 600; }
+.stepper-step.current .stepper-dot {
+  border-color: var(--mizan-gold);
+  background: var(--mizan-gold-light);
+  color: var(--mizan-navy);
+  box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.2);
+}
+
+.stepper-step.failed { color: var(--bs-danger); font-weight: 600; }
+.stepper-step.failed .stepper-dot { background: var(--bs-danger); border-color: var(--bs-danger); color: #fff; }
+```
+
+**Line by line:**
+- Line 134-137: `.login-shell` is the login card: at most 900px wide. `overflow: hidden` cuts the navy panel to the card's rounded corners.
+- Line 139-142: `.login-panel` is the navy side of the login page: a **gradient** from navy to dark navy, at a 160 degree angle, with white text.
+- Line 144-146: the icons in that panel are gold.
+- Line 150-156: `.stepper` is the row of steps (used by `WorkflowStepper`). `display: flex` lays the steps out side by side. `list-style: none` hides the list bullets, because the stepper is an `<ol>`. `overflow-x: auto`: on a narrow phone screen the row scrolls sideways instead of squashing the labels.
+- Line 153: a little padding on top and bottom. A box that scrolls sideways also cuts off anything that sticks out above or below it, and the gold ring around the current dot (line 204) sticks out 4px. Without this padding the ring would be clipped.
+- Line 158-164: each step: `flex: 1 0 90px` means "share the width equally, never shrink, at least 90px". Grey small text by default (a step not reached yet). The grey `#6b7480` is dark enough to pass the WCAG AA contrast rule (the accessibility standard for text that is readable on a white background); a lighter grey would look nicer but be hard to read.
+- Line 167-176: the **connecting line** between dots. `::before` is a **pseudo-element**: a small extra box CSS draws before the step's content, with no HTML needed. `:not(:first-child)` skips the first step (nothing before it). The line starts at the middle of this step (`right: 50%`) and is one step wide (`width: 100%`), so it reaches back to the middle of the previous step. `top: 14px` puts it at the height of the dot's centre (the dot is 30px tall).
+- Line 178-191: the round dot. `border-radius: 50%` turns a square into a circle. `z-index: 1` (higher than the line's `0`) draws the dot **on top of** the line, so the line looks like it joins the dots. The flex lines centre the number or icon inside.
+- Line 193-197: a **done** step: navy dot with white check, navy label, and the line leading into it turns navy. The line into the `current` and `failed` steps is navy too, because the ticket did get that far.
+- Line 199-205: the **current** step: gold border, light gold fill, and a soft gold ring around it (`box-shadow` with 4px spread). This is "you are here".
+- Line 207-208: a **failed** step (Rejected, or Reopened): red. `var(--bs-danger)` reuses Bootstrap's own red, so it matches the red badges.
+
+**The code (part 4: history timeline):**
+
+```css
+/* ---------- History timeline ---------- */
+
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.timeline-item {
+  position: relative;
+  padding: 0.6rem 0 0.6rem 2.25rem;
+}
+
+/* The vertical line, stopping at the last item */
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 1.6rem;
+  bottom: -0.6rem;
+  width: 2px;
+  background: #e4e7eb;
+}
+
+.timeline-icon {
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+}
+```
+
+**Line by line:**
+- Line 212-216: `.timeline` is the history list (used by `HistoryList`), with no bullets and no indent.
+- Line 218-221: each entry has `2.25rem` of empty space on the left, where the icon and line go. `position: relative` makes it the reference box for the `absolute` pieces inside it.
+- Line 224-232: the **vertical line** down the left, again drawn with `::before`. `left: 11px` puts it under the centre of the 24px icon. It runs from under this icon (`top`) down into the next entry (`bottom: -0.6rem`, negative = past the bottom edge). `:not(:last-child)` stops it at the last entry, so the line doesn't hang off the end.
+- Line 234-245: the round icon. `position: absolute; left: 0` pins it at the left edge of its entry, on top of the line. Its colour comes from a Bootstrap class added in `HistoryList` (`text-bg-success`, ...).
+
+A quick word on **Bootstrap classes**, since they appear everywhere below: Bootstrap gives ready-made CSS classes you put in `className`. Examples: `btn btn-primary` (a blue button), `card` (a white box), `alert alert-danger` (a red message box), `form-control` (a styled input), `d-flex gap-2` (lay children out in a row with a gap), `mb-3` (margin-bottom size 3), `text-muted` (grey text), `badge text-bg-success` (a small green label), `row` / `col-lg-8` (a 12-column grid: 8 of 12 columns on large screens). In JSX you write `className` instead of `class`, because `class` is a reserved word in JavaScript. Icons follow the same idea: `<i className="bi bi-lock"></i>` draws the lock icon from Bootstrap Icons. Every icon in the app has `aria-hidden="true"`, which tells screen readers to skip it, because the text next to it already says what it means.
+
+**Committee might ask:**
+- *Why override CSS variables instead of compiling Bootstrap from Sass?* Sass would need an extra build step and package for the same result. Bootstrap 5 reads its colours from CSS variables, so about 20 lines in one file re-colour the whole app.
+- *Why draw the stepper and timeline lines with `::before` instead of extra HTML?* The lines are pure decoration with no meaning. Keeping them in CSS keeps the JSX short: the component only says which step is done, current or failed, and the CSS draws the rest.
 
 ---
 
@@ -567,6 +872,7 @@ export default function RequireAuth({ children }) {
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { roleLabel } from '../utils/labels.js'
+import Logo from './Logo.jsx'
 
 // The navbar around every logged-in page. <Outlet /> is where the current page renders.
 export default function Layout() {
@@ -574,17 +880,19 @@ export default function Layout() {
 
   return (
     <>
-      <nav className="navbar navbar-dark bg-primary mb-4">
+      <nav className="navbar navbar-dark navbar-mizan mb-4">
         <div className="container">
-          <Link className="navbar-brand fw-semibold" to="/tickets">
-            Mizan <span className="opacity-75">ميزان</span>
+          <Link className="navbar-brand" to="/tickets">
+            <Logo />
           </Link>
           <div className="d-flex align-items-center gap-3 text-white">
-            <span>
-              {user.name}{' '}
-              <span className="badge text-bg-light">{roleLabel(user.role)}</span>
+            <span className="d-flex align-items-center gap-2">
+              <i className="bi bi-person-circle fs-5 opacity-75" aria-hidden="true"></i>
+              <span className="d-none d-sm-inline">{user.name}</span>
+              <span className="badge role-badge">{roleLabel(user.role)}</span>
             </span>
             <button className="btn btn-outline-light btn-sm" onClick={logout}>
+              <i className="bi bi-box-arrow-right me-1" aria-hidden="true"></i>
               Log out
             </button>
           </div>
@@ -600,12 +908,58 @@ export default function Layout() {
 ```
 
 **Line by line:**
-- Line 10 and 31: `<>...</>` is a **fragment**: a wrapper that adds no HTML element. A component must return one root, and a fragment lets us return two siblings (`nav` and `main`).
-- Line 13: **`Link`** is React Router's version of `<a>`. It changes the URL without reloading the page.
-- Line 18: `{user.name}`: curly braces in JSX insert a JavaScript value. React escapes it as text, so a name containing `<script>` is shown as text, never run. `{' '}` adds a space, because JSX drops whitespace at line ends. `user` is never `null` here, because `RequireAuth` only draws `Layout` when a user exists.
-- Line 19: the role from the API is `"TeamLeader"`; `roleLabel` shows "Team Leader".
-- Line 21: `onClick={logout}` passes the function itself (no parentheses), so React calls it on click. Writing `onClick={logout()}` would call it immediately during drawing.
-- Line 29: **`Outlet`** is where the matching child route (`TicketsPage`, `CreateTicketPage` or `TicketDetailsPage`) is drawn.
+- Line 4: imports the `Logo` component (next section). A component is used in JSX like an HTML tag: `<Logo />`.
+- Line 11 and 34: `<>...</>` is a **fragment**: a wrapper that adds no HTML element. A component must return one root, and a fragment lets us return two siblings (`nav` and `main`).
+- Line 12: `navbar-dark` tells Bootstrap the background is dark, so it uses light text. `navbar-mizan` (from `index.css`) paints it navy with the gold bottom line.
+- Line 14-16: **`Link`** is React Router's version of `<a>`. It changes the URL without reloading the page. Inside it is the logo, so clicking the logo goes back to the ticket list.
+- Line 19: a person icon. `fs-5` is Bootstrap's "font size 5" (icons are a font, so font size sets their size).
+- Line 20: `{user.name}`: curly braces in JSX insert a JavaScript value. React escapes it as text, so a name containing `<script>` is shown as text, never run. `user` is never `null` here, because `RequireAuth` only draws `Layout` when a user exists. `d-none d-sm-inline` means "hidden on phones, shown from small screens up", so the navbar doesn't wrap on a narrow phone; the role badge still shows.
+- Line 21: the role from the API is `"TeamLeader"`; `roleLabel` shows "Team Leader". `role-badge` gives it the gold outline.
+- Line 23: `onClick={logout}` passes the function itself (no parentheses), so React calls it on click. Writing `onClick={logout()}` would call it immediately during drawing.
+- Line 24: a "leave" icon before the text. `me-1` is a small margin on the right (margin-end) so the icon doesn't touch the text.
+- Line 32: **`Outlet`** is where the matching child route (`TicketsPage`, `CreateTicketPage` or `TicketDetailsPage`) is drawn.
+
+---
+
+## [Logo.jsx](../../mizan-web/src/components/Logo.jsx)
+
+**What it is:** The Mizan logo: a small balance scale (the meaning of "ميزان") next to the name in English and Arabic. Used in the navbar and on the login page.
+
+**The code:**
+
+```jsx
+// The Mizan mark: a balance scale (the meaning of "ميزان") next to the name.
+// Drawn as inline SVG so it takes the theme colours and needs no image file.
+export default function Logo({ size = 28, light = true }) {
+  return (
+    <span className="d-inline-flex align-items-center gap-2">
+      <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+        <g stroke="var(--mizan-gold)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 6v20M10 26h12M7 10h18" />
+          <path d="M7 10l-3 7h6zM25 10l-3 7h6z" />
+        </g>
+      </svg>
+      <span className={`fw-bold ${light ? 'text-white' : 'page-title'}`}>Mizan</span>
+      {/* lang/dir: screen readers pronounce it as Arabic */}
+      <span className="brand-ar" lang="ar" dir="rtl">ميزان</span>
+    </span>
+  )
+}
+```
+
+**Line by line:**
+- Line 3: two props with **default values**, like optional parameters in C# (`int size = 28, bool light = true`). `size` is the icon size in pixels. `light` says whether the logo sits on a dark background (white text) or a light one (navy text). The navbar uses `<Logo />` with both defaults; the login page passes `size={36}` on the navy panel and `light={false}` above the form on phones.
+- Line 5: `d-inline-flex align-items-center gap-2` puts the icon and the two words in one row, centred, with a small gap.
+- Line 6: **SVG** is a picture described as text (lines and shapes), written directly in the JSX. `viewBox="0 0 32 32"` means "the drawing is on a 32 by 32 grid"; `width` and `height` scale it to any size without blur. `aria-hidden` because the words next to it already say "Mizan".
+- Line 7: `<g>` groups the shapes so they share one style: a gold line (`stroke`), 2 units thick, no fill, with rounded ends and corners. In JSX, SVG attributes are camelCase (`strokeWidth`, not `stroke-width`), like `className`. `var(--mizan-gold)` reads the theme colour from `index.css`, so the logo always matches the theme.
+- Line 8: the scale's frame. In a path, `M` means "move to" and `v`, `h` mean "draw a vertical / horizontal line". So: the centre post (x 16, from y 6 down 20), the base at the bottom, and the beam across the top.
+- Line 9: the two pans. `l` draws a line, `h` a horizontal line and `z` closes the shape, so each pan is a small triangle hanging from one end of the beam.
+- Line 12: "Mizan" in bold. The class is chosen with a **ternary** inside a template literal: white on dark backgrounds, navy (`page-title`) on light ones.
+- Line 14: the Arabic name, styled by `.brand-ar` (Cairo font, gold). `lang="ar"` tells the browser and screen readers this word is Arabic, so a screen reader pronounces it with an Arabic voice instead of spelling out letters in English. `dir="rtl"` marks it as right-to-left text, the direction Arabic is written in. The page itself stays `lang="en"`; only this one word is marked.
+
+**Committee might ask:**
+- *Why SVG in the code instead of a PNG image?* It stays sharp at any size, it is one small file with no extra request, and it reads the gold from the theme variable, so changing the theme colour changes the logo too.
+- *Why does the Arabic word need its own font?* Inter, the main font, has no Arabic letters. Cairo is an Arabic font, imported only in the one weight the logo uses.
 
 ---
 
@@ -619,15 +973,23 @@ export default function Layout() {
 import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.jsx'
+import Logo from '../components/Logo.jsx'
 
 // The seeded demo accounts (see DbSeeder.cs). Clicking one fills the form,
 // so switching roles during the presentation takes one click.
 const demoAccounts = [
-  { label: 'Client', email: 'client@mizan.local' },
-  { label: 'Teams Manager', email: 'manager@mizan.local' },
-  { label: 'Team Leader', email: 'leader@mizan.local' },
-  { label: 'Member One', email: 'member1@mizan.local' },
-  { label: 'Member Two', email: 'member2@mizan.local' },
+  { label: 'Client', email: 'client@mizan.local', icon: 'bi-person' },
+  { label: 'Teams Manager', email: 'manager@mizan.local', icon: 'bi-diagram-3' },
+  { label: 'Team Leader', email: 'leader@mizan.local', icon: 'bi-person-badge' },
+  { label: 'Member One', email: 'member1@mizan.local', icon: 'bi-code-slash' },
+  { label: 'Member Two', email: 'member2@mizan.local', icon: 'bi-code-slash' },
+]
+
+// The three selling points on the navy side panel
+const highlights = [
+  { icon: 'bi-shield-check', text: 'Every fix is reviewed by the leader and the manager before the client sees it' },
+  { icon: 'bi-git', text: 'Before and after commits saved with every ticket' },
+  { icon: 'bi-clock-history', text: 'A full audit trail of who did what, and when' },
 ]
 
 export default function LoginPage() {
@@ -657,65 +1019,91 @@ export default function LoginPage() {
 ```
 
 **Line by line:**
-- Line 7-13: a constant list of the seeded accounts, outside the component, so it is created once. Only the emails are here. The password is **not** in the frontend; the user types it (the hint on screen says it comes from the seeder). The admin account is left out because there are no admin screens (cut from scope).
-- Line 19-22: four pieces of state: the two input values, the error message, and whether a login is in progress.
-- Line 26: if a user exists, redirect. This covers two cases with one line: someone opens `/login` while already logged in, and the moment right after a successful login (`login()` calls `setUser`, React redraws this page, and now `user` is set). `location.state?.from` is the page `RequireAuth` remembered; `?.` handles the case where there is no state, and `??` falls back to `/tickets`. Note: this early `return` comes after all the hooks, which is required (hooks must always run in the same order).
-- Line 28-38: the submit handler. **`event.preventDefault()`**: an HTML form's default action is to send the data and reload the page. In an SPA that would wipe all state, so we stop it and handle the submit in JavaScript. Then: clear the old error, disable the button, `await login(...)`. On failure show the `ApiError` message (for example the API's "invalid email or password" title) and enable the button again. On success there is nothing to do: line 26 handles the redirect on the next redraw.
+- Line 4: the `Logo` component, used on the side panel and above the form on phones.
+- Line 8-14: a constant list of the seeded accounts, outside the component, so it is created once. Only the emails are here. The password is **not** in the frontend; the user types it (the hint on screen says it comes from the seeder). The admin account is left out because there are no admin screens (cut from scope). `icon` is the Bootstrap Icons name drawn on each demo button.
+- Line 17-21: the three short selling points shown on the navy side panel, each with an icon. Keeping them in a list (instead of three copies of the same JSX) means the JSX below draws them with one `.map`.
+- Line 27-30: four pieces of state: the two input values, the error message, and whether a login is in progress.
+- Line 34: if a user exists, redirect. This covers two cases with one line: someone opens `/login` while already logged in, and the moment right after a successful login (`login()` calls `setUser`, React redraws this page, and now `user` is set). `location.state?.from` is the page `RequireAuth` remembered; `?.` handles the case where there is no state, and `??` falls back to `/tickets`. Note: this early `return` comes after all the hooks, which is required (hooks must always run in the same order).
+- Line 36-46: the submit handler. **`event.preventDefault()`**: an HTML form's default action is to send the data and reload the page. In an SPA that would wipe all state, so we stop it and handle the submit in JavaScript. Then: clear the old error, disable the button, `await login(...)`. On failure show the `ApiError` message (for example the API's "invalid email or password" title) and enable the button again. On success there is nothing to do: line 34 handles the redirect on the next redraw.
 
 **The code (part 2: the form):**
 
 ```jsx
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="card shadow-sm w-100 login-card">
-        <div className="card-body p-4">
-          <h1 className="h3 text-center mb-1">Mizan <span className="text-primary">ميزان</span></h1>
-          <p className="text-center text-muted mb-4">Code review requests, weighed before they ship</p>
-
-          {error && <div className="alert alert-danger py-2">{error}</div>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label htmlFor="email" className="form-label">Email</label>
-              <input
-                id="email"
-                type="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoFocus
-              />
+    <div className="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+      <div className="card w-100 login-shell">
+        <div className="row g-0">
+          {/* Branded side panel: hidden on phones, where the form alone fits better */}
+          <div className="col-md-5 login-panel d-none d-md-flex flex-column justify-content-between p-4">
+            <div>
+              <Logo size={36} />
+              <p className="mt-3 mb-4 opacity-75">Code review requests, weighed before they ship.</p>
+              <ul className="list-unstyled d-flex flex-column gap-3 mb-0">
+                {highlights.map((h) => (
+                  <li key={h.icon} className="d-flex gap-2 small">
+                    <i className={`bi ${h.icon} fs-5`} aria-hidden="true"></i>
+                    <span className="opacity-75">{h.text}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="mb-3">
-              <label htmlFor="password" className="form-label">Password</label>
-              <input
-                id="password"
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-primary w-100" disabled={submitting}>
-              {submitting ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
+            <p className="small opacity-50 mb-0 mt-4">CoderZ final project · 2026</p>
+          </div>
 
-          <hr />
-          <p className="small text-muted mb-2">Demo accounts (password from the seeder):</p>
-          <div className="d-flex flex-wrap gap-2">
-            {demoAccounts.map((account) => (
-              <button
-                key={account.email}
-                type="button"
-                className="btn btn-outline-secondary btn-sm"
-                onClick={() => setEmail(account.email)}
-              >
-                {account.label}
-              </button>
-            ))}
+          <div className="col-md-7">
+            <div className="card-body p-4 p-lg-5">
+              {/* On phones the side panel is hidden, so the logo shows above the form instead */}
+              <div className="d-md-none text-center mb-3"><Logo size={32} light={false} /></div>
+              <h1 className="h4 page-title mb-1">Sign in</h1>
+              <p className="text-muted mb-4">Welcome back. Pick a demo account below or type your email.</p>
+
+              {error && <div className="alert alert-danger py-2">{error}</div>}
+
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label htmlFor="email" className="form-label">Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    className="form-control"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div className="mb-3">
+                  <label htmlFor="password" className="form-label">Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    className="form-control"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary w-100" disabled={submitting}>
+                  {submitting ? 'Signing in…' : 'Sign in'}
+                </button>
+              </form>
+
+              <hr />
+              <p className="small text-muted mb-2">Demo accounts (password from the seeder):</p>
+              <div className="d-flex flex-wrap gap-2">
+                {demoAccounts.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => setEmail(account.email)}
+                  >
+                    <i className={`bi ${account.icon} me-1`} aria-hidden="true"></i>
+                    {account.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -725,19 +1113,29 @@ export default function LoginPage() {
 ```
 
 **Line by line:**
-- Line 47: **conditional rendering with `&&`**: `{error && <div>...</div>}` draws the alert only when `error` has a value. If `error` is `null`, React draws nothing. It reads as "if error, then show this".
-- Line 49: `onSubmit={handleSubmit}` runs on the Submit button or Enter.
-- Line 52-60: a **controlled input**: React state is the single source of truth. `value={email}` makes the input show the state, and `onChange` copies every keystroke back into state with `setEmail(e.target.value)`. `e.target` is the input element. Because state drives the input, a demo button can fill it with one `setEmail` call (line 86).
-- Line 51 and 53: `htmlFor` is JSX for the HTML `for` attribute (again because `for` is a JavaScript word). It ties the label to the input.
-- Line 58: `required` is a browser check: the form won't submit with an empty field.
-- Line 73-75: the button is disabled while logging in, so a second click can't send a second request. The text uses a **ternary** (`condition ? a : b`), the same as in C#.
-- Line 81-90: **rendering a list with `.map`**: `.map` turns each item of an array into something else, like LINQ `Select`. Here each account becomes a `<button>`. The **`key`** prop gives each item a stable, unique id, so React can tell which item is which when the list changes. The email is unique, so it is the key.
-- Line 85: `type="button"` matters: a button inside or near a form defaults to `submit`. These are outside the `<form>`, but saying it explicitly avoids accidents.
-- Line 86: `onClick={() => setEmail(account.email)}` wraps the call in an arrow function so it runs on click, not during drawing.
+- Line 49: the page centres the card on the screen (`min-vh-100` = at least the full screen height). `py-4` adds space above and below, so the card never touches the screen edges on a short screen.
+- Line 50-51: one card (`login-shell` from `index.css`, max 900px) split into a Bootstrap grid **row**. `g-0` means "no gap between the columns", so the navy panel touches the form.
+- Line 53: the navy side panel takes 5 of 12 columns on medium screens and up (`col-md-5`). `d-none d-md-flex` = hidden on phones, shown (as a flex column) from medium screens up. `justify-content-between` pushes the logo and highlights to the top and the footer line to the bottom.
+- Line 55: the logo, a bit bigger here (`size={36}`). `light` keeps its default `true` (white text on navy).
+- Line 58-63: the highlights list, drawn with `.map`. The icon name is unique, so it is the `key`. `opacity-75` makes the text slightly see-through, so it is softer than the logo.
+- Line 66: a small footer line at the bottom of the panel.
+- Line 69: the form side takes the other 7 columns. On phones it takes the full width.
+- Line 72: `d-md-none` is the opposite of line 53: shown **only** on phones. Since the side panel is hidden there, the logo appears above the form instead, with `light={false}` because the background is white.
+- Line 76: **conditional rendering with `&&`**: `{error && <div>...</div>}` draws the alert only when `error` has a value. If `error` is `null`, React draws nothing. It reads as "if error, then show this".
+- Line 78: `onSubmit={handleSubmit}` runs on the Submit button or Enter.
+- Line 81-89: a **controlled input**: React state is the single source of truth. `value={email}` makes the input show the state, and `onChange` copies every keystroke back into state with `setEmail(e.target.value)`. `e.target` is the input element. Because state drives the input, a demo button can fill it with one `setEmail` call (line 115).
+- Line 80 and 92: `htmlFor` is JSX for the HTML `for` attribute (again because `for` is a JavaScript word). It ties the label to the input.
+- Line 87: `required` is a browser check: the form won't submit with an empty field.
+- Line 102-104: the button is disabled while logging in, so a second click can't send a second request. The text uses a **ternary** (`condition ? a : b`), the same as in C#.
+- Line 110-120: **rendering a list with `.map`**: `.map` turns each item of an array into something else, like LINQ `Select`. Here each account becomes a `<button>`. The **`key`** prop gives each item a stable, unique id, so React can tell which item is which when the list changes. The email is unique, so it is the key.
+- Line 113: `type="button"` matters: a button inside or near a form defaults to `submit`. These are outside the `<form>`, but saying it explicitly avoids accidents.
+- Line 115: `onClick={() => setEmail(account.email)}` wraps the call in an arrow function so it runs on click, not during drawing.
+- Line 117: the account's icon before its label. The class name is built with a template literal: `bi bi-person`, `bi bi-diagram-3`, ...
 
 **Committee might ask:**
 - *Why is there no registration screen?* Out of scope for the MVP. Users are seeded (`DbSeeder.cs`). Registration and admin screens are future work.
 - *Is it safe to show the demo emails?* They are seeded demo accounts for the presentation. The password is not shown or stored in the frontend. In a real deployment these buttons would be removed.
+- *How does the login page work on a phone?* With Bootstrap's responsive classes only, no JavaScript: the navy panel is hidden below the medium breakpoint (`d-none d-md-flex`) and a small logo appears above the form instead (`d-md-none`).
 
 ---
 
@@ -786,10 +1184,14 @@ export default function TicketsPage() {
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1 className="h4 mb-0">Tickets</h1>
+        <div>
+          <h1 className="h4 page-title mb-0">Tickets</h1>
+          {tickets?.length > 0 && <span className="small text-muted">{tickets.length} shown for your role</span>}
+        </div>
         {/* Only clients create tickets. Hiding the button is for convenience; the API enforces it. */}
         {user.role === 'Client' && (
           <button className="btn btn-primary" onClick={() => navigate('/tickets/new')}>
+            <i className="bi bi-plus-lg me-1" aria-hidden="true"></i>
             New ticket
           </button>
         )}
@@ -800,11 +1202,14 @@ export default function TicketsPage() {
       {!error && tickets === null && <p className="text-muted">Loading tickets…</p>}
 
       {tickets?.length === 0 && (
-        <div className="card card-body text-center text-muted">No tickets to show yet.</div>
+        <div className="card text-center empty-state">
+          <i className="bi bi-inbox d-block mb-2" aria-hidden="true"></i>
+          No tickets to show yet.
+        </div>
       )}
 
       {tickets?.length > 0 && (
-        <div className="card shadow-sm">
+        <div className="card overflow-hidden">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
@@ -850,13 +1255,17 @@ export default function TicketsPage() {
 ```
 
 **Line by line:**
-- Line 32-36: the "New ticket" button is shown only to clients. The comment states the rule of this whole frontend: hiding is convenience; the API returns 403 to anyone else.
-- Line 33: `navigate('/tickets/new')` changes the page from code.
-- Line 41-47: four mutually exclusive states drawn with `&&`: error, loading, empty, table. `tickets?.length` uses optional chaining because `tickets` is `null` while loading; `null?.length` is `undefined`, which is neither `0` nor `> 0`, so neither block shows.
-- Line 62-63: one `<tr>` per ticket with `key={ticket.id}` (the Guid from the API). Clicking anywhere on the row opens the ticket.
-- Line 65-69: the title is also a real `<Link>`, so keyboard users can Tab to it and middle-click opens a new tab. A click on the link also bubbles to the row's `onClick`, so both navigate to the same URL. That is harmless.
-- Line 71: `className` built with a template literal: status `"InProgress"` gives `badge text-bg-primary`.
-- Line 79: `??` again: if the ticket has no team yet, show grey "Not routed".
+- Line 30-33: the heading, plus a small grey count under it ("3 shown for your role") once tickets are loaded. The wording reminds the viewer (and the committee) that each role sees a different list.
+- Line 35-40: the "New ticket" button is shown only to clients. The comment states the rule of this whole frontend: hiding is convenience; the API returns 403 to anyone else.
+- Line 36: `navigate('/tickets/new')` changes the page from code.
+- Line 37: a plus icon before the text.
+- Line 43-54: four mutually exclusive states drawn with `&&`: error, loading, empty, table. `tickets?.length` uses optional chaining because `tickets` is `null` while loading; `null?.length` is `undefined`, which is neither `0` nor `> 0`, so neither block shows.
+- Line 48-51: the empty state: a big grey inbox icon above the text (`empty-state` in `index.css`). `d-block` puts the icon on its own line.
+- Line 55: `overflow-hidden` cuts the table's corners to the card's rounded corners.
+- Line 69-70: one `<tr>` per ticket with `key={ticket.id}` (the Guid from the API). Clicking anywhere on the row opens the ticket.
+- Line 72-76: the title is also a real `<Link>`, so keyboard users can Tab to it and middle-click opens a new tab. A click on the link also bubbles to the row's `onClick`, so both navigate to the same URL. That is harmless.
+- Line 78: `className` built with a template literal: status `"InProgress"` gives `badge text-bg-primary`.
+- Line 86: `??` again: if the ticket has no team yet, show grey "Not routed".
 
 ---
 
@@ -968,7 +1377,7 @@ export default function CreateTicketPage() {
     <div className="row justify-content-center">
       <div className="col-lg-8">
         <Link to="/tickets" className="small text-decoration-none">← Back to tickets</Link>
-        <h1 className="h4 mt-2 mb-3">New ticket</h1>
+        <h1 className="h4 page-title mt-2 mb-3">New ticket</h1>
 
         <div className="card shadow-sm">
           <div className="card-body">
@@ -994,10 +1403,14 @@ export default function CreateTicketPage() {
 
               <div className="mb-3">
                 <label htmlFor="repositoryUrl" className="form-label">GitHub repository</label>
-                <input id="repositoryUrl" name="repositoryUrl" placeholder="https://github.com/owner/repo"
-                  className={`form-control${invalid('RepositoryUrl')}`}
-                  value={form.repositoryUrl} onChange={handleChange} required maxLength={500} />
-                {feedback('RepositoryUrl')}
+                {/* has-validation keeps the rounded corners right when the error message shows */}
+                <div className="input-group has-validation">
+                  <span className="input-group-text"><i className="bi bi-github" aria-hidden="true"></i></span>
+                  <input id="repositoryUrl" name="repositoryUrl" placeholder="https://github.com/owner/repo"
+                    className={`form-control${invalid('RepositoryUrl')}`}
+                    value={form.repositoryUrl} onChange={handleChange} required maxLength={500} />
+                  {feedback('RepositoryUrl')}
+                </div>
               </div>
 
               <div className="row">
@@ -1027,6 +1440,7 @@ export default function CreateTicketPage() {
               <div className="d-flex justify-content-end gap-2">
                 <Link to="/tickets" className="btn btn-outline-secondary">Cancel</Link>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {!saving && <i className="bi bi-send me-1" aria-hidden="true"></i>}
                   {saving ? 'Submitting…' : 'Submit ticket'}
                 </button>
               </div>
@@ -1043,9 +1457,12 @@ export default function CreateTicketPage() {
 - Line 69: `invalid('Title')` returns `' is-invalid'` when the server sent an error for `Title`, else `''`. It is glued onto `form-control`, and Bootstrap draws the field with a red border.
 - Line 70-71: `feedback('Title')` returns the message in a `div.invalid-feedback` (Bootstrap shows it in red under the field), or nothing. It uses `&&` the same way as JSX conditional rendering.
 - Line 83-84: the browser only checks `required` and `maxLength`. The real rules (URL must be `https://github.com/...`, SHA must be hex) live **once**, on the server (chapter 2), and their messages are shown here per field. No duplicate validation logic to keep in sync.
+- Line 77: `page-title` makes the heading navy and bold, like on the other pages.
 - Line 88-90 (and the same pattern below): each input is controlled (`value` + `onChange`), has a `name` for `handleChange`, and shows its error with `invalid` / `feedback`. The `maxLength` values match the column lengths in the EF configurations (Title 200, Description 4000, RepositoryUrl 500, Branch 200, CommitSha 64).
-- Line 127: the `<select>` options come from `priorities.map`. An `<option>` with no `value` uses its text as the value.
-- Line 134: Cancel is a `Link` styled as a button.
+- Line 104-110: the repository input is a Bootstrap **input group**: a grey box with the GitHub icon glued to the left of the input, so it is clear a GitHub link is expected. The error message (`feedback`) has to sit **inside** the group, right after the input, for Bootstrap to show it. `has-validation` is the Bootstrap class that keeps the right-hand corners rounded when that message is there.
+- Line 131: the `<select>` options come from `priorities.map`. An `<option>` with no `value` uses its text as the value.
+- Line 138: Cancel is a `Link` styled as a button.
+- Line 140: a send icon on the submit button, shown only while not saving (`!saving &&`), so "Submitting…" appears on its own.
 
 **Committee might ask:**
 - *Why not validate the URL and SHA in React too?* To keep one source of truth. The server must validate anyway (anyone can call the API without the UI). The UI shows the server's messages next to each field, so the user still gets a clear answer.
@@ -1065,6 +1482,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api, isAbort } from '../api/client.js'
 import ActionsPanel from '../components/ticket/ActionsPanel.jsx'
 import HistoryList from '../components/ticket/HistoryList.jsx'
+import WorkflowStepper from '../components/ticket/WorkflowStepper.jsx'
 import { workflowActions } from '../workflow/actions.js'
 import { summarizeError } from '../utils/fieldErrors.js'
 import { formatDate, priorityColor, splitWords, statusColor } from '../utils/labels.js'
@@ -1083,10 +1501,11 @@ const isSafeLink = (url) => url.startsWith('https://')
 ```
 
 **Line by line:**
-- Line 10: a regular expression for a Guid. The `i` flag ignores case. Used to reject URLs like `/tickets/abc` without calling the API (the backend route has `{id:guid}`, so such a call would 404 anyway).
-- Line 13: the field names that have an input able to show their own error. Only the submit-fix form has those (branch, SHA, summary). Errors for any other key, such as `TeamId` from the route form or `MemberIds` from the assign form, go in the alert above the actions, so no message is ever lost.
-- Line 16: builds a GitHub commit link. `replace(/\/$/, '')` removes one trailing slash so the URL doesn't get `//commit`.
-- Line 20: **https-only links**. A URL like `javascript:alert(1)` placed in `href` would run code when clicked. The server already only accepts `https://github.com/...` URLs, but checking again here means a bad value from anywhere can never become a clickable script link. Defense in depth.
+- Line 6: the progress stepper component (see `WorkflowStepper.jsx` below).
+- Line 11: a regular expression for a Guid. The `i` flag ignores case. Used to reject URLs like `/tickets/abc` without calling the API (the backend route has `{id:guid}`, so such a call would 404 anyway).
+- Line 14: the field names that have an input able to show their own error. Only the submit-fix form has those (branch, SHA, summary). Errors for any other key, such as `TeamId` from the route form or `MemberIds` from the assign form, go in the alert above the actions, so no message is ever lost.
+- Line 17: builds a GitHub commit link. `replace(/\/$/, '')` removes one trailing slash so the URL doesn't get `//commit`.
+- Line 21: **https-only links**. A URL like `javascript:alert(1)` placed in `href` would run code when clicked. The server already only accepts `https://github.com/...` URLs, but checking again here means a bad value from anywhere can never become a clickable script link. Defense in depth.
 
 **The code (part 2: state, refs, and the two loaders):**
 
@@ -1135,13 +1554,13 @@ export default function TicketDetailsPage() {
 ```
 
 **Line by line:**
-- Line 23: **`useParams`** reads route parameters. For `/tickets/:id`, it returns `{ id: '...' }`.
-- Line 26-33: state for the ticket, the history, their errors, whether an action is running (`busy`), and the action's errors.
-- Line 37: **`currentId` ref**. React Router reuses this same page component when you go from `/tickets/A` to `/tickets/B` (only `id` changes). A slow answer for A could arrive after you are on B. Every loader checks `currentId.current === ticketId` before saving, so an answer for another ticket is ignored. A ref is used (not state) because the loaders need the latest value instantly, and changing it must not cause a redraw.
-- Line 39: `pageLoads` holds the AbortController of the current page load, so later reloads (after an action) can use the same signal and be cancelled when the page closes or the ticket changes.
-- Line 41: `running` ref, the double-click guard (same idea as `submitting` in `CreateTicketPage`).
-- Line 43-50: `loadTicket` calls `GET /api/tickets/{id}` and stores the result, unless the request was cancelled or is for another ticket. Note it stores the whole error object in `loadError`, because the page needs `status` (404 vs other). Wrapped in `useCallback` with `[]`, so it is the same function forever; that keeps the effect below from re-running.
-- Line 52-62: `loadHistory` does the same for `GET /api/tickets/{id}/history`. A history error is shown only in the history card, not over the whole page.
+- Line 24: **`useParams`** reads route parameters. For `/tickets/:id`, it returns `{ id: '...' }`.
+- Line 27-34: state for the ticket, the history, their errors, whether an action is running (`busy`), and the action's errors.
+- Line 38: **`currentId` ref**. React Router reuses this same page component when you go from `/tickets/A` to `/tickets/B` (only `id` changes). A slow answer for A could arrive after you are on B. Every loader checks `currentId.current === ticketId` before saving, so an answer for another ticket is ignored. A ref is used (not state) because the loaders need the latest value instantly, and changing it must not cause a redraw.
+- Line 40: `pageLoads` holds the AbortController of the current page load, so later reloads (after an action) can use the same signal and be cancelled when the page closes or the ticket changes.
+- Line 42: `running` ref, the double-click guard (same idea as `submitting` in `CreateTicketPage`).
+- Line 44-51: `loadTicket` calls `GET /api/tickets/{id}` and stores the result, unless the request was cancelled or is for another ticket. Note it stores the whole error object in `loadError`, because the page needs `status` (404 vs other). Wrapped in `useCallback` with `[]`, so it is the same function forever; that keeps the effect below from re-running.
+- Line 53-63: `loadHistory` does the same for `GET /api/tickets/{id}/history`. A history error is shown only in the history card, not over the whole page.
 
 **The code (part 3: load when the id changes):**
 
@@ -1165,11 +1584,11 @@ export default function TicketDetailsPage() {
 ```
 
 **Line by line:**
-- Line 79: the dependency array includes `id`, so this runs when the page opens **and** every time the ticket id in the URL changes. `loadTicket` and `loadHistory` never change (see `useCallback`), but React's lint rule wants every value the effect uses listed.
-- Line 65-71: first point `currentId` at the new id (from now on, answers for the old id are ignored), then clear everything from the previous ticket so its data never shows on the new one.
-- Line 72: an invalid id: stop here; the render shows "Ticket not found."
-- Line 74-77: one controller for both loads, saved in `pageLoads` for later use. Ticket and history load in parallel.
-- Line 78: cleanup: aborts both loads when the id changes again or the page closes (and once in development because of StrictMode).
+- Line 80: the dependency array includes `id`, so this runs when the page opens **and** every time the ticket id in the URL changes. `loadTicket` and `loadHistory` never change (see `useCallback`), but React's lint rule wants every value the effect uses listed.
+- Line 66-72: first point `currentId` at the new id (from now on, answers for the old id are ignored), then clear everything from the previous ticket so its data never shows on the new one.
+- Line 73: an invalid id: stop here; the render shows "Ticket not found."
+- Line 75-78: one controller for both loads, saved in `pageLoads` for later use. Ticket and history load in parallel.
+- Line 79: cleanup: aborts both loads when the id changes again or the page closes (and once in development because of StrictMode).
 
 **The code (part 4: `handleAction`, where every button ends up):**
 
@@ -1208,19 +1627,19 @@ export default function TicketDetailsPage() {
 ```
 
 **Line by line:**
-- Line 83: `name` is the action name from `allowedActions` (for example `"LeaderApprove"`). `body` is the form data for actions with a form (route, assign, submit) and `undefined` for simple buttons, so `api()` sends no body.
-- Line 84-85: double-click guard with the `running` ref.
-- Line 86: remember which ticket this click was for.
-- Line 88-90: disable all buttons (`busy`) and clear old errors.
-- Line 92: `workflowActions[name].path` turns `"LeaderApprove"` into `"leader-approve"`, so the call is `POST /api/tickets/{id}/leader-approve`. Each workflow endpoint answers with the **updated ticket details** (`TicketDetailsDto`, including the new `allowedActions`).
-- Line 93: if the user went to another ticket while waiting, drop the answer.
-- Line 94: `setTicket(updated)`: React redraws the page with the new status, and `ActionsPanel` redraws the buttons from the new `allowedActions`. No second GET is needed.
-- Line 95: reload the history so the new audit row appears. It uses the page's current signal so it is cancelled if the page closes.
-- Line 99-103: **409 or 403 = refresh**. 409 Conflict comes from the backend when the ticket's status no longer allows this action (`TicketWorkflow.Apply`) or when someone else saved the same ticket at the same moment (the `RowVersion` check in `TicketRepository`). 403 comes when this user may no longer do it. In both cases the buttons on screen are stale. So: show the server's message plus "refreshed", and reload the ticket and history, so the user sees the real current state and the correct buttons.
-- Line 104-106: any other error (for example a 400 validation error from a form): the per-field errors were stored on line 98 and show under the inputs; `summarizeError` builds the top message.
-- Line 107-110: `finally` always re-enables the buttons, success or failure.
+- Line 84: `name` is the action name from `allowedActions` (for example `"LeaderApprove"`). `body` is the form data for actions with a form (route, assign, submit) and `undefined` for simple buttons, so `api()` sends no body.
+- Line 85-86: double-click guard with the `running` ref.
+- Line 87: remember which ticket this click was for.
+- Line 89-91: disable all buttons (`busy`) and clear old errors.
+- Line 93: `workflowActions[name].path` turns `"LeaderApprove"` into `"leader-approve"`, so the call is `POST /api/tickets/{id}/leader-approve`. Each workflow endpoint answers with the **updated ticket details** (`TicketDetailsDto`, including the new `allowedActions`).
+- Line 94: if the user went to another ticket while waiting, drop the answer.
+- Line 95: `setTicket(updated)`: React redraws the page with the new status (the stepper moves to the next step), and `ActionsPanel` redraws the buttons from the new `allowedActions`. No second GET is needed.
+- Line 96: reload the history so the new audit row appears. It uses the page's current signal so it is cancelled if the page closes.
+- Line 100-104: **409 or 403 = refresh**. 409 Conflict comes from the backend when the ticket's status no longer allows this action (`TicketWorkflow.Apply`) or when someone else saved the same ticket at the same moment (the `RowVersion` check in `TicketRepository`). 403 comes when this user may no longer do it. In both cases the buttons on screen are stale. So: show the server's message plus "refreshed", and reload the ticket and history, so the user sees the real current state and the correct buttons.
+- Line 105-107: any other error (for example a 400 validation error from a form): the per-field errors were stored on line 99 and show under the inputs; `summarizeError` builds the top message.
+- Line 108-111: `finally` always re-enables the buttons, success or failure.
 
-**The code (part 5: not found, loading, and the header):**
+**The code (part 5: not found, loading, the header and the stepper):**
 
 ```jsx
   if (!validId || loadError) {
@@ -1240,16 +1659,23 @@ export default function TicketDetailsPage() {
       <Link to="/tickets" className="small text-decoration-none">← Back to tickets</Link>
 
       <div className="d-flex flex-wrap align-items-center gap-2 mt-2 mb-3">
-        <h1 className="h4 mb-0 me-2">{ticket.title}</h1>
+        <h1 className="h4 page-title mb-0 me-2">{ticket.title}</h1>
         <span className={`badge text-bg-${statusColor(ticket.status)}`}>{splitWords(ticket.status)}</span>
         <span className={`badge text-bg-${priorityColor(ticket.priority)}`}>{ticket.priority}</span>
+      </div>
+
+      <div className="card mb-3">
+        <div className="card-body py-3">
+          <WorkflowStepper status={ticket.status} />
+        </div>
       </div>
 ```
 
 **Line by line:**
-- Line 113-121: an invalid id or a 404 shows "Ticket not found." The backend returns 404 both for a missing ticket and for one this user may not see, so nobody can find out which ticket ids exist. Other errors show their message.
-- Line 123: still loading.
-- Line 129-133: title and coloured badges for status and priority.
+- Line 114-122: an invalid id or a 404 shows "Ticket not found." The backend returns 404 both for a missing ticket and for one this user may not see, so nobody can find out which ticket ids exist. Other errors show their message.
+- Line 124: still loading.
+- Line 130-134: title (navy, `page-title`) and coloured badges for status and priority.
+- Line 136-140: a full-width card with the **progress stepper**. It only gets `ticket.status`; `WorkflowStepper` works out the rest. Because it reads from `ticket`, it moves forward by itself after every action (when `setTicket(updated)` runs on line 95).
 
 **The code (part 6: details, snapshots, responses):**
 
@@ -1291,12 +1717,16 @@ export default function TicketDetailsPage() {
           </div>
 
           <div className="card shadow-sm">
-            <div className="card-header bg-white fw-medium">Code snapshots</div>
+            <div className="card-header"><i className="bi bi-git me-2" aria-hidden="true"></i>Code snapshots</div>
             <ul className="list-group list-group-flush">
               {ticket.snapshots.map((s) => (
                 <li key={s.id} className="list-group-item d-flex flex-wrap gap-2 align-items-center">
-                  <span className={`badge text-bg-${s.kind === 'Before' ? 'secondary' : 'success'}`}>{s.kind}</span>
-                  <span className="small">{s.branch}</span>
+                  <span className={`badge text-bg-${s.kind === 'Before' ? 'secondary' : 'success'}`}>
+                    <i className={`bi ${s.kind === 'Before' ? 'bi-hourglass-split' : 'bi-check2-circle'} me-1`}
+                      aria-hidden="true"></i>
+                    {s.kind}
+                  </span>
+                  <span className="small"><i className="bi bi-diagram-2 me-1 text-muted" aria-hidden="true"></i>{s.branch}</span>
                   {isSafeLink(s.repositoryUrl)
                     ? (
                       <a className="font-monospace small" href={commitUrl(s.repositoryUrl, s.commitSha)}
@@ -1312,7 +1742,7 @@ export default function TicketDetailsPage() {
           </div>
 
           <div className="card shadow-sm">
-            <div className="card-header bg-white fw-medium">Responses</div>
+            <div className="card-header"><i className="bi bi-chat-left-text me-2" aria-hidden="true"></i>Responses</div>
             <div className="card-body">
               {ticket.responses.length === 0 && <p className="text-muted small mb-0">No response yet.</p>}
               {ticket.responses.map((r) => (
@@ -1331,20 +1761,23 @@ export default function TicketDetailsPage() {
 ```
 
 **Line by line:**
-- Line 139: `style={{ whiteSpace: 'pre-wrap' }}`: inline styles in JSX are a JavaScript object with camelCase names. `pre-wrap` keeps the line breaks the client typed. The text is still inserted as plain text, so it is safe.
-- Line 143-145: the repository becomes a link only if it starts with `https://`. `target="_blank"` opens a new tab; `rel="noreferrer"` stops the new tab from getting a handle back to our page and from receiving our URL as the referrer.
-- Line 150: `ticket.manager?.name ?? ...`: the manager is `null` until the ticket is routed. `?.` avoids a crash; `??` shows "Not routed yet".
-- Line 155-157: a ternary: the assignees' names joined with commas, or "Nobody yet". `.map(...).join(', ')` is like `string.Join(", ", list.Select(a => a.Name))`.
-- Line 161-166: the "Closed" row only appears when `closedAt` has a value. The fragment `<>` groups the `dt` and `dd` without an extra element.
-- Line 174-188: the before/after **code snapshots**. Each one shows its kind (Before grey, After green), branch, and a link to that exact commit on GitHub with the short 7-character SHA (`slice(0, 7)`, like `Substring(0, 7)`). This is how the committee can click from "before" to "after".
-- Line 195-205: the responses. A response is `Draft` (yellow) until the manager approves it, then `Sent` (green). The date shown is `sentAt` if sent, else `createdAt`. A client only ever sees `Sent` responses here, because the backend filters them (`TicketService.ToDetailsDto` keeps only `Sent` responses for the Client role). The frontend just shows whatever it gets.
+- Line 146: `style={{ whiteSpace: 'pre-wrap' }}`: inline styles in JSX are a JavaScript object with camelCase names. `pre-wrap` keeps the line breaks the client typed. The text is still inserted as plain text, so it is safe.
+- Line 150-152: the repository becomes a link only if it starts with `https://`. `target="_blank"` opens a new tab; `rel="noreferrer"` stops the new tab from getting a handle back to our page and from receiving our URL as the referrer.
+- Line 157: `ticket.manager?.name ?? ...`: the manager is `null` until the ticket is routed. `?.` avoids a crash; `??` shows "Not routed yet".
+- Line 162-164: a ternary: the assignees' names joined with commas, or "Nobody yet". `.map(...).join(', ')` is like `string.Join(", ", list.Select(a => a.Name))`.
+- Line 168-173: the "Closed" row only appears when `closedAt` has a value. The fragment `<>` groups the `dt` and `dd` without an extra element.
+- Line 178-201: the before/after **code snapshots**. Each one shows its kind (Before grey, After green), branch, and a link to that exact commit on GitHub with the short 7-character SHA (`slice(0, 7)`, like `Substring(0, 7)`). This is how the committee can click from "before" to "after".
+- Line 179, 204: each card header starts with an icon (a git icon for snapshots, a speech bubble for responses). The header style itself (small grey capitals, white background) now comes from `.card-header` in `index.css`, so the old `bg-white fw-medium` classes are gone.
+- Line 183-187: the kind badge also gets an icon chosen with a ternary: an hourglass for Before (the code waiting for a fix), a tick for After (the fixed code).
+- Line 188: a small branch icon before the branch name.
+- Line 203-218: the responses. A response is `Draft` (yellow) until the manager approves it, then `Sent` (green). The date shown is `sentAt` if sent, else `createdAt`. A client only ever sees `Sent` responses here, because the backend filters them (`TicketService.ToDetailsDto` keeps only `Sent` responses for the Client role). The frontend just shows whatever it gets.
 
 **The code (part 7: actions and history column):**
 
 ```jsx
         <div className="col-lg-4 d-flex flex-column gap-3">
-          <div className="card shadow-sm border-primary">
-            <div className="card-header bg-white fw-medium">Your actions</div>
+          <div className="card card-actions">
+            <div className="card-header"><i className="bi bi-lightning-charge me-2" aria-hidden="true"></i>Your actions</div>
             <div className="card-body">
               <ActionsPanel ticket={ticket} busy={busy} error={actionError} fieldErrors={fieldErrors}
                 onAction={handleAction} />
@@ -1352,8 +1785,8 @@ export default function TicketDetailsPage() {
           </div>
 
           <div className="card shadow-sm">
-            <div className="card-header bg-white fw-medium">History</div>
-            <div className="card-body py-1">
+            <div className="card-header"><i className="bi bi-clock-history me-2" aria-hidden="true"></i>History</div>
+            <div className="card-body py-2">
               {historyError
                 ? <p className="text-danger small my-2">Couldn't load the history: {historyError}</p>
                 : <HistoryList entries={history} />}
@@ -1367,8 +1800,9 @@ export default function TicketDetailsPage() {
 ```
 
 **Line by line:**
-- Line 214-215: `ActionsPanel` gets the ticket, the busy flag, the errors, and `handleAction` as the `onAction` prop. Passing a function as a prop is how a child tells its parent "this happened", like passing a delegate or event handler in C#. The child never calls the API itself; the page does.
-- Line 222-224: the history card shows an error if the history failed, or `HistoryList` otherwise.
+- Line 222-223: the actions card has the `card-actions` class (a gold top border from `index.css`) and a lightning icon, so it stands out as "the place where you act".
+- Line 225-226: `ActionsPanel` gets the ticket, the busy flag, the errors, and `handleAction` as the `onAction` prop. Passing a function as a prop is how a child tells its parent "this happened", like passing a delegate or event handler in C#. The child never calls the API itself; the page does.
+- Line 233-235: the history card shows an error if the history failed, or `HistoryList` otherwise.
 
 **Committee might ask:**
 - *How does the page know which buttons to show?* From `ticket.allowedActions`, which the server computes from the same rules table that enforces the actions (`TicketWorkflow.AllowedActions`). The frontend never decides permissions.
@@ -1419,7 +1853,10 @@ export default function ActionsPanel({ ticket, busy, error, fieldErrors, onActio
 
       {withForm.map((name) => (
         <div key={name} className="mb-3">
-          <div className="fw-medium mb-2">{workflowActions[name].label}</div>
+          <div className="fw-medium mb-2">
+            <i className={`bi ${workflowActions[name].icon} me-2`} aria-hidden="true"></i>
+            {workflowActions[name].label}
+          </div>
           {workflowActions[name].form === 'route' && <RouteForm busy={busy} onRun={(body) => onAction(name, body)} />}
           {workflowActions[name].form === 'assign' && (
             <AssignForm ticket={ticket} busy={busy} onRun={(body) => onAction(name, body)} />
@@ -1440,6 +1877,7 @@ export default function ActionsPanel({ ticket, busy, error, fieldErrors, onActio
               disabled={busy}
               onClick={() => runSimple(name)}
             >
+              <i className={`bi ${workflowActions[name].icon} me-1`} aria-hidden="true"></i>
               {workflowActions[name].label}
             </button>
           ))}
@@ -1456,9 +1894,11 @@ export default function ActionsPanel({ ticket, busy, error, fieldErrors, onActio
 - Line 12-19: no actions: say so. The error is still shown (as a warning), because after a 409 refresh the user may have no actions left and must still see why.
 - Line 21-22: split into simple actions (one click) and actions with a form.
 - Line 24-28: `runSimple`. **`window.confirm`** shows the browser's built-in OK/Cancel box. It is used only for actions that have a `confirm` text in `workflow/actions.js`: Reject, ManagerApprove (sends the response to the client) and Close. If the user clicks Cancel, nothing is sent. Then call `onAction(name)` with no body.
-- Line 34-45: one block per form action. `onRun={(body) => onAction(name, body)}`: the form only collects the data and calls `onRun(body)`; this wrapper adds the action name and hands it to the page.
-- Line 42: only `SubmitFixForm` gets `fieldErrors`, because only it has text inputs the server validates per field.
-- Line 47-61: one button per simple action, coloured by its `variant` (for example `btn-success` for Approve), all disabled while `busy`.
+- Line 34-48: one block per form action. `onRun={(body) => onAction(name, body)}`: the form only collects the data and calls `onRun(body)`; this wrapper adds the action name and hands it to the page.
+- Line 36-39: the form's title, with the action's icon from `workflow/actions.js` before the label (for example a signpost for "Route to team").
+- Line 45: only `SubmitFixForm` gets `fieldErrors`, because only it has text inputs the server validates per field.
+- Line 50-65: one button per simple action, coloured by its `variant` (for example `btn-success` for Approve), all disabled while `busy`.
+- Line 60: the button's icon, also from `workflow/actions.js` (a tick for Approve, a lock for Close, ...). The icon is decoration only; the label next to it says what the button does.
 
 **Committee might ask:**
 - *Could a user add a button by editing the page?* They could send any request they like, but the server checks every action against the rules table and returns 403 or 409. The frontend's `allowedActions` is a mirror of the server rules, not the rules.
@@ -1684,29 +2124,119 @@ export default function SubmitFixForm({ busy, fieldErrors, onRun }) {
 
 ---
 
-## [HistoryList.jsx](../../mizan-web/src/components/ticket/HistoryList.jsx)
+## [WorkflowStepper.jsx](../../mizan-web/src/components/ticket/WorkflowStepper.jsx)
 
-**What it is:** Shows the ticket's audit log entries in order.
+**What it is:** The row of numbered steps at the top of the ticket page (Submitted, Routed, In Progress, ... Closed). It shows at a glance how far the ticket has come. It only **shows** the status; it decides nothing.
 
 **The code:**
 
 ```jsx
-import { actionLabel, formatDate, splitWords } from '../../utils/labels.js'
+import { splitWords } from '../../utils/labels.js'
 
-// The audit log, oldest first. Clients get a shorter list: the API leaves out the
-// team's internal steps (send-backs, approvals between leader and manager).
-export default function HistoryList({ entries }) {
-  if (!entries) return <p className="text-muted small mb-0">Loading history…</p>
-  if (entries.length === 0) return <p className="text-muted small mb-0">No history yet.</p>
+// The normal path a ticket takes, in order. DISPLAY ONLY: it shows where the ticket is.
+// Which moves are allowed is still decided by the server (TicketWorkflow.cs → allowedActions).
+const steps = ['Submitted', 'Routed', 'InProgress', 'LeaderReview', 'ManagerReview', 'ResponseSent', 'Closed']
+
+const stateText = { done: 'completed', current: 'current step', failed: 'stopped here', todo: 'not reached yet' }
+
+export default function WorkflowStepper({ status }) {
+  let items
+
+  if (status === 'Rejected') {
+    // A rejected ticket never left step one: show Submitted, then a red end step
+    items = [
+      { key: 'Submitted', label: 'Submitted', state: 'done' },
+      { key: 'Rejected', label: 'Rejected', state: 'failed' },
+    ]
+  } else {
+    // Reopened goes back to the team, so it sits on the "In Progress" step, labelled in red
+    const current = steps.indexOf(status === 'Reopened' ? 'InProgress' : status)
+    items = steps.map((step, i) => ({
+      key: step,
+      label: status === 'Reopened' && i === current ? 'Reopened' : splitWords(step),
+      // Closed is the last step: nothing left to do, so it shows as done, not "current"
+      state: i < current || status === 'Closed' ? 'done'
+        : i === current ? (status === 'Reopened' ? 'failed' : 'current')
+        : 'todo',
+    }))
+  }
+
+  // Where the ticket is now, for screen readers: the gold step, the red step, or the last step once closed
+  const nowIndex = items.findIndex((item) => item.state === 'current' || item.state === 'failed')
+  const currentIndex = nowIndex === -1 && status === 'Closed' ? items.length - 1 : nowIndex
 
   return (
-    <ul className="list-group list-group-flush">
-      {entries.map((entry) => (
-        <li key={entry.id} className="list-group-item px-0">
-          <div className="d-flex justify-content-between gap-2">
-            <span className="fw-medium">{actionLabel(entry.action)}</span>
-            <span className="text-muted small text-nowrap">{formatDate(entry.createdAt)}</span>
+    <ol className="stepper" aria-label="Ticket progress">
+      {items.map((item, i) => (
+        <li key={item.key} className={`stepper-step ${item.state}`}
+          aria-current={i === currentIndex ? 'step' : undefined}>
+          <div className="stepper-dot">
+            {item.state === 'done' && <i className="bi bi-check-lg" aria-hidden="true"></i>}
+            {item.state === 'failed' && <i className="bi bi-exclamation-lg" aria-hidden="true"></i>}
+            {(item.state === 'current' || item.state === 'todo') && i + 1}
           </div>
+          {item.label}
+          {/* The icons are hidden from screen readers, so say the state in words */}
+          <span className="visually-hidden"> ({stateText[item.state]})</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+```
+
+**Line by line:**
+- Line 5: the "happy path" of a ticket, in order. These are the backend's `TicketStatus` names, as the API sends them. Rejected and Reopened are not in the list because they are not steps on the normal path; they are handled separately below.
+- Line 7: the words a screen reader says for each state (used on line 47). An object used as a small lookup table, like a `Dictionary<string, string>`.
+- Line 9: the component gets only the status string (`"LeaderReview"`, ...).
+- Line 10: `let` declares a variable that can be assigned later (like `var` in C#). `const` cannot be reassigned, so `let` is needed here because `items` is set in one of two branches.
+- Line 12-17: a **Rejected** ticket stopped at the very start (the manager rejected it). So the stepper shows only two steps: Submitted (done) and a red Rejected step.
+- Line 20: find the position of the current status in the list. `indexOf` is like `List.IndexOf` in C#. A **Reopened** ticket goes back to the team, so it is placed on the In Progress step.
+- Line 21-28: turn each step name into an object with a `key`, a `label` and a `state`. `.map((step, i) => ...)` gives both the item and its index, like LINQ `Select((step, i) => ...)`. The `({ ... })` with round brackets around the curly ones means "return this object" from the arrow function.
+  - Line 23: the label is the step name split into words ("Leader Review"), except the Reopened case, where the In Progress step is labelled "Reopened".
+  - Line 25-27: the state, written as a chain of ternaries (like `if / else if / else`): steps before the current one are `done`; the current one is `current` (or `failed`, red, if the ticket was reopened); later ones are `todo`. When the status is Closed, **every** step is `done`, because there is nothing left to do.
+- Line 32-33: which step to mark as "you are here" for screen readers. `findIndex` returns the position of the first item that matches, or `-1` if none does (like `List.FindIndex`). It looks for the gold (current) or red (failed) step. A Closed ticket has neither (all steps are done), so then the last step is used.
+- Line 36: an `<ol>` (ordered list), because the steps have an order. `aria-label` gives the list a name for screen readers.
+- Line 38: each step's CSS class is `stepper-step` plus its state (`done`, `current`, `failed` or `todo`). All the colours, the dot and the connecting line come from `index.css`; this component only picks the state.
+- Line 39: **`aria-current="step"`** is the standard way to tell a screen reader "this is the current step". On the other steps it is `undefined`, and React leaves the attribute out completely.
+- Line 40-44: what goes inside the dot: a tick for a done step, an exclamation mark for a failed one, and the step number (`i + 1`, because indexes start at 0) for the current and later steps.
+- Line 45: the label under the dot.
+- Line 47: `visually-hidden` is a Bootstrap class that hides text from the eye but keeps it for screen readers. The tick and exclamation icons are hidden from screen readers (`aria-hidden`), and colour alone says nothing to a blind user, so the state is also said in words: "Leader Review (current step)".
+
+**Committee might ask:**
+- *Doesn't the stepper duplicate the workflow rules?* No. It only shows the status the server sent. It has no roles and no transitions. What a user may do next is still decided by the server: `TicketWorkflow.cs` enforces each move, and `allowedActions` tells the page which buttons to draw. If the stepper had a mistake, it would show the wrong picture, but nobody could do anything they're not allowed to.
+- *Why is the list of steps written in the frontend?* It is the display order of the statuses, like the labels in `labels.js`. It changes only if the business process changes, and then the backend enum and rules would change too.
+- *What about accessibility?* The steps are an ordered list with a label, the current step has `aria-current="step"`, and each step's state is written in hidden text for screen readers, because the icons and colours can't be seen by everyone.
+
+---
+
+## [HistoryList.jsx](../../mizan-web/src/components/ticket/HistoryList.jsx)
+
+**What it is:** Shows the ticket's audit log entries in order, as a vertical timeline with a coloured icon for each entry.
+
+**The code:**
+
+```jsx
+import { actionIcon, actionLabel, formatDate, splitWords, statusColor } from '../../utils/labels.js'
+
+// The audit log, oldest first, drawn as a timeline. Clients get a shorter list: the API
+// leaves out the team's internal steps (send-backs, approvals between leader and manager).
+export default function HistoryList({ entries }) {
+  if (!entries) return <p className="text-muted small my-2">Loading history…</p>
+  if (entries.length === 0) return <p className="text-muted small my-2">No history yet.</p>
+
+  return (
+    <ol className="timeline">
+      {entries.map((entry) => (
+        <li key={entry.id} className="timeline-item">
+          {/* The dot takes the colour of the status the ticket moved to (same colours as the badges).
+              Rows whose new value isn't a status (a team or member name) fall back to grey. */}
+          <span className={`timeline-icon text-bg-${statusColor(entry.newValue)}`}>
+            <i className={`bi ${actionIcon(entry.action)}`} aria-hidden="true"></i>
+          </span>
+          {/* Date under the label, not beside it: the side column is narrow and labels would wrap */}
+          <div className="fw-medium">{actionLabel(entry.action)}</div>
+          <div className="text-muted small">{formatDate(entry.createdAt)}</div>
           <div className="small text-muted">
             by {entry.actorName}
             {(entry.oldValue || entry.newValue) && (
@@ -1719,7 +2249,7 @@ export default function HistoryList({ entries }) {
           </div>
         </li>
       ))}
-    </ul>
+    </ol>
   )
 }
 ```
@@ -1727,10 +2257,16 @@ export default function HistoryList({ entries }) {
 **Line by line:**
 - Line 3-4: the order and the shorter list for clients come from the API; this component just displays what it receives.
 - Line 6-7: `null` = loading (the page sets history to `null` before loading), empty array = nothing yet.
+- Line 10: an `<ol>` with the `timeline` class from `index.css`, which draws the vertical line down the left. It is an ordered list because history has an order (oldest first).
 - Line 11-12: one list item per entry, keyed by its id.
-- Line 14: `actionLabel` turns `"LeaderApprove"` into "Leader approved".
-- Line 18: who did it (`actorName`). The `AuditLog` table stores the actor's id; the API adds the name.
-- Line 19-25: if there is an old or new value, show "Old → New", for example "Leader Review → Manager Review". Each part only shows if it has a value (a "Created" entry has no old value).
+- Line 15-17: the round icon on the line. Its colour comes from `statusColor(entry.newValue)`, the **same** colour as the status badge: an entry that moved the ticket to Leader Review gets a yellow dot, Closed a green one, and so on. Some entries have a new value that isn't a status (for example "Team chosen" stores the team name); `statusColor` doesn't know it and falls back to grey. `text-bg-...` is a Bootstrap class that sets a background colour **and** a readable text colour on top of it. The icon inside comes from `actionIcon` (`labels.js`): a lock for Close, a tick for an approval, ...
+- Line 19: `actionLabel` turns `"LeaderApprove"` into "Leader approved".
+- Line 20: the date on its own line under the label. The history card is in the narrow right column, so date and label side by side would wrap badly.
+- Line 22: who did it (`actorName`). The `AuditLog` table stores the actor's id; the API adds the name.
+- Line 23-29: if there is an old or new value, show "Old → New", for example "Leader Review → Manager Review". Each part only shows if it has a value (a "Created" entry has no old value).
+
+**Committee might ask:**
+- *Where do the timeline colours come from?* From the same `statusColor` table as the status badges, so a colour means the same thing everywhere on the page. Nothing new is stored; it is all worked out from the audit row the API sends.
 
 ---
 
@@ -1747,26 +2283,28 @@ export default function HistoryList({ entries }) {
 //
 // form: the action needs input first (a team, members, or the fix), so it opens a small form.
 // confirm: the action can't be undone, so ask before sending it.
+// icon: a Bootstrap Icons name shown on the button.
 export const workflowActions = {
-  Route:           { path: 'route',             label: 'Route to team',  variant: 'primary', form: 'route' },
-  Reject:          { path: 'reject',            label: 'Reject',         variant: 'outline-danger', confirm: 'Reject this ticket? This cannot be undone.' },
-  Assign:          { path: 'assign',            label: 'Assign members', variant: 'primary', form: 'assign' },
-  Submit:          { path: 'submit',            label: 'Submit fix',     variant: 'primary', form: 'submit' },
-  LeaderApprove:   { path: 'leader-approve',    label: 'Approve',        variant: 'success' },
-  LeaderSendBack:  { path: 'leader-send-back',  label: 'Send back',      variant: 'outline-warning' },
-  ManagerApprove:  { path: 'manager-approve',   label: 'Approve and send to client', variant: 'success', confirm: 'Send this response to the client?' },
-  ManagerSendBack: { path: 'manager-send-back', label: 'Send back',      variant: 'outline-warning' },
-  Close:           { path: 'close',             label: 'Accept and close', variant: 'success', confirm: 'Accept the fix and close this ticket?' },
-  Reopen:          { path: 'reopen',            label: 'Reopen',         variant: 'outline-danger' },
+  Route:           { path: 'route',             label: 'Route to team',  variant: 'primary', icon: 'bi-signpost-split', form: 'route' },
+  Reject:          { path: 'reject',            label: 'Reject',         variant: 'outline-danger', icon: 'bi-x-lg', confirm: 'Reject this ticket? This cannot be undone.' },
+  Assign:          { path: 'assign',            label: 'Assign members', variant: 'primary', icon: 'bi-person-plus', form: 'assign' },
+  Submit:          { path: 'submit',            label: 'Submit fix',     variant: 'primary', icon: 'bi-upload', form: 'submit' },
+  LeaderApprove:   { path: 'leader-approve',    label: 'Approve',        variant: 'success', icon: 'bi-check-lg' },
+  LeaderSendBack:  { path: 'leader-send-back',  label: 'Send back',      variant: 'outline-warning', icon: 'bi-arrow-counterclockwise' },
+  ManagerApprove:  { path: 'manager-approve',   label: 'Approve and send to client', variant: 'success', icon: 'bi-send', confirm: 'Send this response to the client?' },
+  ManagerSendBack: { path: 'manager-send-back', label: 'Send back',      variant: 'outline-warning', icon: 'bi-arrow-counterclockwise' },
+  Close:           { path: 'close',             label: 'Accept and close', variant: 'success', icon: 'bi-lock', confirm: 'Accept the fix and close this ticket?' },
+  Reopen:          { path: 'reopen',            label: 'Reopen',         variant: 'outline-danger', icon: 'bi-unlock' },
 }
 ```
 
 **Line by line:**
-- Line 7: an object used like a `Dictionary<string, ActionInfo>`. The keys are exactly the names of the backend `WorkflowAction` enum, which the API sends as strings in `allowedActions`.
+- Line 8: an object used like a `Dictionary<string, ActionInfo>`. The keys are exactly the names of the backend `WorkflowAction` enum, which the API sends as strings in `allowedActions`.
 - `path`: the last part of the endpoint URL, matching the `[HttpPost("...")]` routes in `TicketWorkflowController`.
 - `label`: the button text. `variant`: the Bootstrap button colour (`btn-success`, `btn-outline-danger`, ...).
 - `form`: which small form `ActionsPanel` shows (`route`, `assign`, `submit`). Actions without `form` are simple buttons.
 - `confirm`: for Reject, ManagerApprove and Close, which can't be taken back from the UI, `ActionsPanel` asks with `window.confirm` first.
+- `icon` (line 7 explains it): the Bootstrap Icons class drawn before the label, for example `bi-lock` for Close. The same icon names are used for the matching entries on the history timeline (`actionIcons` in `labels.js`), so "Close" looks the same on the button and in the history.
 
 **Committee might ask:**
 - *Isn't this duplicating the workflow rules?* No. It holds no rules: no statuses, no roles. The only rules table is `TicketWorkflow.cs` on the server. This file is a lookup for display, like a resource file of labels.
@@ -1788,8 +2326,8 @@ const statusColors = {
   InProgress: 'primary',
   LeaderReview: 'warning',
   ManagerReview: 'warning',
-  ResponseSent: 'success',
-  Closed: 'dark',
+  ResponseSent: 'info', // waiting on the client
+  Closed: 'success', // not 'dark': with the navy theme it would look the same as In Progress
   Reopened: 'danger',
   Rejected: 'danger',
 }
@@ -1828,6 +2366,24 @@ const actionLabels = {
 }
 export const actionLabel = (action) => actionLabels[action] ?? splitWords(action)
 
+// Bootstrap Icons name for each audit action (the dots on the history timeline)
+const actionIcons = {
+  Created: 'bi-plus-lg',
+  Route: 'bi-signpost-split',
+  TeamAssigned: 'bi-people',
+  MemberAssigned: 'bi-person-plus',
+  Assign: 'bi-play-fill',
+  Submit: 'bi-upload',
+  LeaderApprove: 'bi-check-lg',
+  LeaderSendBack: 'bi-arrow-counterclockwise',
+  ManagerApprove: 'bi-send',
+  ManagerSendBack: 'bi-arrow-counterclockwise',
+  Close: 'bi-lock',
+  Reopen: 'bi-unlock',
+  Reject: 'bi-x-lg',
+}
+export const actionIcon = (action) => actionIcons[action] ?? 'bi-dot'
+
 // The API stores times in UTC. If the value has no zone marker, treat it as UTC
 // so the browser converts it to local time instead of reading it as local already.
 export function formatDate(value) {
@@ -1842,10 +2398,12 @@ export function formatDate(value) {
 
 **Line by line:**
 - Line 3-13 and 15-20: lookup tables from the backend's `TicketStatus` and `Priority` enum names to Bootstrap colour names. These names are not exported (no `export`), so they are private to this file, like `private static readonly` in C#.
+- Line 9-10: two colours changed in the visual polish. Since the theme made Bootstrap's `primary` navy, a `dark` Closed badge would look almost the same as the navy In Progress badge. So Closed is now green (`success`, finished well), and Response Sent is light blue (`info`, waiting for the client to answer). The comments say why.
 - Line 23-25: a regular expression that puts a space between a lowercase letter and the uppercase letter after it: `"LeaderReview"` becomes `"Leader Review"`. `g` means "every match", not just the first.
 - Line 27-29: tiny exported helpers. `?? 'secondary'` gives a grey fallback for any unknown value, so a new enum value never breaks the screen.
 - Line 32-47: readable names for audit log actions, with a fallback to `splitWords`.
-- Line 51-58: **dates as UTC**. The backend stores `DateTime` in UTC. If a value comes back without a zone marker (no `Z` and no `+hh:mm`), JavaScript's `new Date("2026-11-15T10:00:00")` would read it as *local* time, and the time shown would be off by the time zone difference. So when there is no zone, we add `Z` (UTC). Then `toLocaleString(undefined, ...)` shows it in the browser's local time and language (`undefined` = use the browser's locale), like `ToLocalTime().ToString("g")`.
+- Line 50-65: the icon for each audit log action, used by `HistoryList` for the timeline dots. The workflow actions use the same icons as their buttons in `workflow/actions.js`. An unknown action gets `bi-dot` (a plain dot), so a new audit action from the server never breaks the timeline.
+- Line 69-76: **dates as UTC**. The backend stores `DateTime` in UTC. If a value comes back without a zone marker (no `Z` and no `+hh:mm`), JavaScript's `new Date("2026-11-15T10:00:00")` would read it as *local* time, and the time shown would be off by the time zone difference. So when there is no zone, we add `Z` (UTC). Then `toLocaleString(undefined, ...)` shows it in the browser's local time and language (`undefined` = use the browser's locale), like `ToLocalTime().ToString("g")`.
 
 Note: the regex `/[zZ]|[+-]\d\d:\d\d$/` checks for a `z`/`Z` *anywhere* in the string, not only at the end. For ISO date strings from the API that is fine, because they contain no other letters except `T`.
 
@@ -1901,7 +2459,7 @@ export function summarizeError(err, knownFields) {
 
 **The normal case.** The Team Leader is on `/tickets/{id}`. The ticket is in `LeaderReview`, so `GET /api/tickets/{id}` returned `allowedActions: ["LeaderApprove", "LeaderSendBack"]`.
 
-1. **Drawing the button.** `ActionsPanel` filters `allowedActions`, finds that `LeaderApprove` has no `form`, and draws a green "Approve" button (`variant: 'success'`). It has no `confirm`, so no confirmation box.
+1. **Drawing the button.** `ActionsPanel` filters `allowedActions`, finds that `LeaderApprove` has no `form`, and draws a green "Approve" button with a tick icon (`variant: 'success'`, `icon: 'bi-check-lg'`). It has no `confirm`, so no confirmation box.
 2. **The click.** `onClick={() => runSimple('LeaderApprove')}` runs. `runSimple` skips the confirm and calls `onAction('LeaderApprove')`, which is the page's `handleAction`.
 3. **`handleAction`.** It checks the `running` ref (no second click can get in), remembers `ticketId`, sets `busy` (all buttons disabled at the next redraw), clears old errors, and calls `api('/tickets/{id}/leader-approve', { method: 'POST', body: undefined })`.
 4. **`api()`.** Reads the token, adds `Authorization: Bearer ...`, and calls `fetch('/api/tickets/{id}/leader-approve')`. No body, so no `Content-Type`.
@@ -1909,8 +2467,8 @@ export function summarizeError(err, knownFields) {
 6. **The backend** (see [chapter 3: the workflow](03-workflow.md)). JwtBearer validates the token. `TicketWorkflowController.LeaderApprove` calls `TicketWorkflowService.LeaderApproveAsync`, which loads the user and ticket, calls `TicketWorkflow.Apply` (is this the leader of this ticket's team? is the status `LeaderReview`?), changes the status to `ManagerReview`, writes an `AuditLog` row, and saves everything in one transaction. It answers `200 OK` with the updated `TicketDetailsDto`. For the leader, the new `allowedActions` is now empty, because only the routing manager can act in `ManagerReview`.
 7. **Back in `api()`.** `response.ok` is true; the body is parsed and returned.
 8. **Back in `handleAction`.** `currentId.current === ticketId` (still the same ticket), so `setTicket(updated)`.
-9. **Redraw.** React calls `TicketDetailsPage` again with the new ticket. The status badge shows "Manager Review". `ActionsPanel` gets the new `allowedActions` (empty) and shows "Nothing for you to do on this ticket right now." No code in the frontend decided that; the server's list did.
-10. **History.** `loadHistory(ticketId, pageLoads.current?.signal)` fetches `/api/tickets/{id}/history`, and `HistoryList` shows the new entry "Leader approved, Leader Review → Manager Review".
+9. **Redraw.** React calls `TicketDetailsPage` again with the new ticket. The status badge shows "Manager Review", and `WorkflowStepper` moves the gold "current" dot one step to the right (Leader Review now has a tick). `ActionsPanel` gets the new `allowedActions` (empty) and shows "Nothing for you to do on this ticket right now." No code in the frontend decided that; the server's list did.
+10. **History.** `loadHistory(ticketId, pageLoads.current?.signal)` fetches `/api/tickets/{id}/history`, and `HistoryList` adds the new entry at the bottom of the timeline: a yellow dot with a tick (yellow because the new status, Manager Review, has a yellow badge), "Leader approved", "Leader Review → Manager Review".
 11. **`finally`.** `running` is reset and `busy` becomes `false`.
 
 **The same click when someone else changed the ticket first.** Say the leader had the page open in two tabs, and approved in the other tab a minute ago. This tab still shows `LeaderReview` and the Approve button.

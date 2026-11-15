@@ -213,25 +213,28 @@ The screens people use. It runs on `http://localhost:5173` and only ever talks t
 |---|---|
 | `vite.config.js` | Vite settings. The **proxy** forwards every `/api` call to the API on `localhost:5199`. The browser sees one address, so CORS never comes up. |
 | `index.html` | The one HTML page. React draws everything inside `<div id="root">`. |
-| `src/main.jsx` | The starting point: loads Bootstrap, then wraps the app in the router and the login state (`AuthProvider`). |
+| `src/main.jsx` | The starting point: loads Bootstrap, the icons and the fonts, then our theme (`index.css`), then wraps the app in the router and the login state (`AuthProvider`). |
+| `src/index.css` | The navy + gold theme. Bootstrap reads its colours from CSS variables, so setting `--bs-primary` and the button variables here re-colours every `btn-primary`, link and badge without Sass. Also the styles Bootstrap doesn't have: the stepper, the history timeline and the login side panel. |
 | `src/App.jsx` | The list of pages (routes): `/login` is public, `/tickets` needs a login, anything else goes to `/tickets`. |
 | `src/api/client.js` | The **one** place that calls the API. It adds the token, reads the JSON, turns error responses into an `ApiError` with the API's message, and logs you out on a 401. |
 | `src/auth/AuthContext.jsx` | Remembers who is logged in and shares it with every page. `login()` calls the API and saves the token in **sessionStorage**. After a refresh it asks `/api/auth/me` whether the saved token is still good. |
 | `src/auth/RequireAuth.jsx` | A guard around pages that need a login: no user, go to `/login`. It only decides what to *show*. The API still checks every request. |
-| `src/components/Layout.jsx` | The blue top bar (name, role, Log out) around every logged-in page. |
-| `src/pages/LoginPage.jsx` | The login form, with buttons that fill in each demo account's email. |
+| `src/components/Layout.jsx` | The navy top bar (logo, name, role, Log out) around every logged-in page. |
+| `src/components/Logo.jsx` | The Mizan mark: a gold balance scale drawn in SVG, plus "Mizan ميزان". Used in the top bar and on the login page. |
+| `src/pages/LoginPage.jsx` | The login form, with buttons that fill in each demo account's email. On wide screens a navy side panel shows the logo and three selling points. |
 | `src/pages/TicketsPage.jsx` | The ticket table. The API already filters by role, so it shows whatever comes back. "New ticket" shows for clients only. |
 | `src/pages/CreateTicketPage.jsx` | The new-ticket form (clients only). It trims what you typed, sends it, and shows the server's message under each field it rejects. |
 | `src/pages/TicketDetailsPage.jsx` | One ticket: its info, code snapshots (linked to the commit on GitHub), responses, your action buttons, and the history. Every button ends up in `handleAction`, which POSTs the step and swaps in the updated ticket the API sends back. |
-| `src/workflow/actions.js` | How each workflow action *looks*: its URL, button text and colour, and whether it needs a form or a "are you sure?". It does **not** decide who gets which button: that's `allowedActions` from the server. |
+| `src/workflow/actions.js` | How each workflow action *looks*: its URL, button text, colour and icon, and whether it needs a form or a "are you sure?". It does **not** decide who gets which button: that's `allowedActions` from the server. |
 | `src/components/ticket/ActionsPanel.jsx` | Draws one button or small form for each action in `allowedActions`. Reject and Close ask for confirmation first. |
 | `src/components/ticket/RouteForm.jsx` | Manager: choose the team (from `GET /api/teams`). |
 | `src/components/ticket/AssignForm.jsx` | Leader: tick members of their team. People already on the ticket stay ticked. On a reopened ticket, "Continue with current team" needs no new ticks. |
 | `src/components/ticket/SubmitFixForm.jsx` | Member: branch, commit SHA and summary of the fix. The summary becomes the response the client reads. |
-| `src/components/ticket/HistoryList.jsx` | The audit log as a list: what happened, who did it, old status → new status. |
+| `src/components/ticket/WorkflowStepper.jsx` | The progress bar at the top of a ticket: Submitted → … → Closed, with done steps ticked and the current one in gold. Rejected and Reopened show in red. **Display only**: it reads `ticket.status`, it doesn't decide anything. |
+| `src/components/ticket/HistoryList.jsx` | The audit log as a timeline: an icon per action, what happened, when, who did it, old status → new status. The dot takes the colour of the new status. |
 | `src/utils/fieldErrors.js` | Finds the server's message for one form field in a 400 response. |
-| `src/utils/labels.js` | Colours for status and priority badges, readable names ("LeaderReview" → "Leader Review", audit actions → "Leader sent back"), and showing UTC times in local time. |
-| `package.json` | The frontend's packages (React, React Router, Bootstrap, Vite) and commands (`npm run dev`, `npm run build`). |
+| `src/utils/labels.js` | Colours for status and priority badges, readable names ("LeaderReview" → "Leader Review", audit actions → "Leader sent back"), an icon per audit action, and showing UTC times in local time. |
+| `package.json` | The frontend's packages (React, React Router, Bootstrap, Bootstrap Icons, the Inter and Cairo fonts, Vite) and commands (`npm run dev`, `npm run build`). |
 
 **How to run it:** start the API (Visual Studio, `http` profile, or `dotnet run --project TicketingSystem.API --launch-profile http`), then in `mizan-web` run `npm run dev` and open `http://localhost:5173`.
 

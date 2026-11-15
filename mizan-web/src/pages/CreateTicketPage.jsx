@@ -74,7 +74,7 @@ export default function CreateTicketPage() {
     <div className="row justify-content-center">
       <div className="col-lg-8">
         <Link to="/tickets" className="small text-decoration-none">← Back to tickets</Link>
-        <h1 className="h4 mt-2 mb-3">New ticket</h1>
+        <h1 className="h4 page-title mt-2 mb-3">New ticket</h1>
 
         <div className="card shadow-sm">
           <div className="card-body">
@@ -100,10 +100,14 @@ export default function CreateTicketPage() {
 
               <div className="mb-3">
                 <label htmlFor="repositoryUrl" className="form-label">GitHub repository</label>
-                <input id="repositoryUrl" name="repositoryUrl" placeholder="https://github.com/owner/repo"
-                  className={`form-control${invalid('RepositoryUrl')}`}
-                  value={form.repositoryUrl} onChange={handleChange} required maxLength={500} />
-                {feedback('RepositoryUrl')}
+                {/* has-validation keeps the rounded corners right when the error message shows */}
+                <div className="input-group has-validation">
+                  <span className="input-group-text"><i className="bi bi-github" aria-hidden="true"></i></span>
+                  <input id="repositoryUrl" name="repositoryUrl" placeholder="https://github.com/owner/repo"
+                    className={`form-control${invalid('RepositoryUrl')}`}
+                    value={form.repositoryUrl} onChange={handleChange} required maxLength={500} />
+                  {feedback('RepositoryUrl')}
+                </div>
               </div>
 
               <div className="row">
@@ -133,6 +137,7 @@ export default function CreateTicketPage() {
               <div className="d-flex justify-content-end gap-2">
                 <Link to="/tickets" className="btn btn-outline-secondary">Cancel</Link>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {!saving && <i className="bi bi-send me-1" aria-hidden="true"></i>}
                   {saving ? 'Submitting…' : 'Submit ticket'}
                 </button>
               </div>

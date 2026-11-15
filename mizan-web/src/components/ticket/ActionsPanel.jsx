@@ -33,7 +33,10 @@ export default function ActionsPanel({ ticket, busy, error, fieldErrors, onActio
 
       {withForm.map((name) => (
         <div key={name} className="mb-3">
-          <div className="fw-medium mb-2">{workflowActions[name].label}</div>
+          <div className="fw-medium mb-2">
+            <i className={`bi ${workflowActions[name].icon} me-2`} aria-hidden="true"></i>
+            {workflowActions[name].label}
+          </div>
           {workflowActions[name].form === 'route' && <RouteForm busy={busy} onRun={(body) => onAction(name, body)} />}
           {workflowActions[name].form === 'assign' && (
             <AssignForm ticket={ticket} busy={busy} onRun={(body) => onAction(name, body)} />
@@ -54,6 +57,7 @@ export default function ActionsPanel({ ticket, busy, error, fieldErrors, onActio
               disabled={busy}
               onClick={() => runSimple(name)}
             >
+              <i className={`bi ${workflowActions[name].icon} me-1`} aria-hidden="true"></i>
               {workflowActions[name].label}
             </button>
           ))}

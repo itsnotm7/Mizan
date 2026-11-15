@@ -27,10 +27,14 @@ export default function TicketsPage() {
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1 className="h4 mb-0">Tickets</h1>
+        <div>
+          <h1 className="h4 page-title mb-0">Tickets</h1>
+          {tickets?.length > 0 && <span className="small text-muted">{tickets.length} shown for your role</span>}
+        </div>
         {/* Only clients create tickets. Hiding the button is for convenience; the API enforces it. */}
         {user.role === 'Client' && (
           <button className="btn btn-primary" onClick={() => navigate('/tickets/new')}>
+            <i className="bi bi-plus-lg me-1" aria-hidden="true"></i>
             New ticket
           </button>
         )}
@@ -41,11 +45,14 @@ export default function TicketsPage() {
       {!error && tickets === null && <p className="text-muted">Loading tickets…</p>}
 
       {tickets?.length === 0 && (
-        <div className="card card-body text-center text-muted">No tickets to show yet.</div>
+        <div className="card text-center empty-state">
+          <i className="bi bi-inbox d-block mb-2" aria-hidden="true"></i>
+          No tickets to show yet.
+        </div>
       )}
 
       {tickets?.length > 0 && (
-        <div className="card shadow-sm">
+        <div className="card overflow-hidden">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">

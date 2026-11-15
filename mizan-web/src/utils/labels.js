@@ -6,8 +6,8 @@ const statusColors = {
   InProgress: 'primary',
   LeaderReview: 'warning',
   ManagerReview: 'warning',
-  ResponseSent: 'success',
-  Closed: 'dark',
+  ResponseSent: 'info', // waiting on the client
+  Closed: 'success', // not 'dark': with the navy theme it would look the same as In Progress
   Reopened: 'danger',
   Rejected: 'danger',
 }
@@ -45,6 +45,24 @@ const actionLabels = {
   Reject: 'Rejected',
 }
 export const actionLabel = (action) => actionLabels[action] ?? splitWords(action)
+
+// Bootstrap Icons name for each audit action (the dots on the history timeline)
+const actionIcons = {
+  Created: 'bi-plus-lg',
+  Route: 'bi-signpost-split',
+  TeamAssigned: 'bi-people',
+  MemberAssigned: 'bi-person-plus',
+  Assign: 'bi-play-fill',
+  Submit: 'bi-upload',
+  LeaderApprove: 'bi-check-lg',
+  LeaderSendBack: 'bi-arrow-counterclockwise',
+  ManagerApprove: 'bi-send',
+  ManagerSendBack: 'bi-arrow-counterclockwise',
+  Close: 'bi-lock',
+  Reopen: 'bi-unlock',
+  Reject: 'bi-x-lg',
+}
+export const actionIcon = (action) => actionIcons[action] ?? 'bi-dot'
 
 // The API stores times in UTC. If the value has no zone marker, treat it as UTC
 // so the browser converts it to local time instead of reading it as local already.

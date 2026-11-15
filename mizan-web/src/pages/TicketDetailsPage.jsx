@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api, isAbort } from '../api/client.js'
 import ActionsPanel from '../components/ticket/ActionsPanel.jsx'
 import HistoryList from '../components/ticket/HistoryList.jsx'
+import WorkflowStepper from '../components/ticket/WorkflowStepper.jsx'
 import { workflowActions } from '../workflow/actions.js'
 import { summarizeError } from '../utils/fieldErrors.js'
 import { formatDate, priorityColor, splitWords, statusColor } from '../utils/labels.js'
@@ -127,9 +128,15 @@ export default function TicketDetailsPage() {
       <Link to="/tickets" className="small text-decoration-none">← Back to tickets</Link>
 
       <div className="d-flex flex-wrap align-items-center gap-2 mt-2 mb-3">
-        <h1 className="h4 mb-0 me-2">{ticket.title}</h1>
+        <h1 className="h4 page-title mb-0 me-2">{ticket.title}</h1>
         <span className={`badge text-bg-${statusColor(ticket.status)}`}>{splitWords(ticket.status)}</span>
         <span className={`badge text-bg-${priorityColor(ticket.priority)}`}>{ticket.priority}</span>
+      </div>
+
+      <div className="card mb-3">
+        <div className="card-body py-3">
+          <WorkflowStepper status={ticket.status} />
+        </div>
       </div>
 
       <div className="row g-3">
@@ -169,12 +176,16 @@ export default function TicketDetailsPage() {
           </div>
 
           <div className="card shadow-sm">
-            <div className="card-header bg-white fw-medium">Code snapshots</div>
+            <div className="card-header"><i className="bi bi-git me-2" aria-hidden="true"></i>Code snapshots</div>
             <ul className="list-group list-group-flush">
               {ticket.snapshots.map((s) => (
                 <li key={s.id} className="list-group-item d-flex flex-wrap gap-2 align-items-center">
-                  <span className={`badge text-bg-${s.kind === 'Before' ? 'secondary' : 'success'}`}>{s.kind}</span>
-                  <span className="small">{s.branch}</span>
+                  <span className={`badge text-bg-${s.kind === 'Before' ? 'secondary' : 'success'}`}>
+                    <i className={`bi ${s.kind === 'Before' ? 'bi-hourglass-split' : 'bi-check2-circle'} me-1`}
+                      aria-hidden="true"></i>
+                    {s.kind}
+                  </span>
+                  <span className="small"><i className="bi bi-diagram-2 me-1 text-muted" aria-hidden="true"></i>{s.branch}</span>
                   {isSafeLink(s.repositoryUrl)
                     ? (
                       <a className="font-monospace small" href={commitUrl(s.repositoryUrl, s.commitSha)}
@@ -190,7 +201,7 @@ export default function TicketDetailsPage() {
           </div>
 
           <div className="card shadow-sm">
-            <div className="card-header bg-white fw-medium">Responses</div>
+            <div className="card-header"><i className="bi bi-chat-left-text me-2" aria-hidden="true"></i>Responses</div>
             <div className="card-body">
               {ticket.responses.length === 0 && <p className="text-muted small mb-0">No response yet.</p>}
               {ticket.responses.map((r) => (
@@ -208,8 +219,8 @@ export default function TicketDetailsPage() {
         </div>
 
         <div className="col-lg-4 d-flex flex-column gap-3">
-          <div className="card shadow-sm border-primary">
-            <div className="card-header bg-white fw-medium">Your actions</div>
+          <div className="card card-actions">
+            <div className="card-header"><i className="bi bi-lightning-charge me-2" aria-hidden="true"></i>Your actions</div>
             <div className="card-body">
               <ActionsPanel ticket={ticket} busy={busy} error={actionError} fieldErrors={fieldErrors}
                 onAction={handleAction} />
@@ -217,8 +228,8 @@ export default function TicketDetailsPage() {
           </div>
 
           <div className="card shadow-sm">
-            <div className="card-header bg-white fw-medium">History</div>
-            <div className="card-body py-1">
+            <div className="card-header"><i className="bi bi-clock-history me-2" aria-hidden="true"></i>History</div>
+            <div className="card-body py-2">
               {historyError
                 ? <p className="text-danger small my-2">Couldn't load the history: {historyError}</p>
                 : <HistoryList entries={history} />}
