@@ -102,3 +102,16 @@ An httpOnly cookie instead of sessionStorage, refresh tokens, TypeScript, and pa
 ### Future work
 
 A styled confirm dialog, a reason text when rejecting or sending back, live updates when someone else changes the ticket (SignalR), and comments.
+
+## Automated tests (xUnit)
+
+- **What it does:** `TicketingSystem.Tests` checks the rules table (`TicketWorkflow`) and the visibility rule (`TicketVisibility`). For every action there are three kinds of test: the right person at the right status succeeds, the wrong person gets Forbidden (403), and the right person at the wrong status gets Conflict (409). Run with `dotnet test` or Visual Studio's Test Explorer. All of them run in under a second.
+- **Why these classes:** they hold the core business logic and they're pure: a user and a ticket in, an answer out. No database, no mocks, so the tests are short and never flaky.
+- **"Beyond the role" is tested:** the test data has an *Other* user per role (another team's leader, a manager who didn't route the ticket). Those users must be refused, which proves the checks look at *which* person, not just the role.
+- **The tests were proven to work:** one rule was broken on purpose (Route allowed from Routed) and two tests failed. Then it was reverted.
+
+### Likely committee questions
+
+- **Why not test the controllers and database too?** Those were covered by the end-to-end runs (67 API checks and the full chain in the browser). The next step would be integration tests with `WebApplicationFactory`, which runs the real API in memory.
+- **What's the difference between `[Fact]` and `[Theory]`?** A Fact is one test. A Theory is one test run once per `[InlineData]` row, e.g. "Route fails from Routed, InProgress and Closed".
+- **How do you test an Expression without a database?** `.Compile()` turns it into a normal function, and you call it on in-memory tickets. It's the same logic EF Core turns into SQL.

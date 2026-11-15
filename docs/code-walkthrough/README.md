@@ -16,6 +16,7 @@ It sits next to two other documents:
 | 4 | [Infrastructure: the tools](04-infrastructure.md) | EF Core (DbContext, table configurations, repositories), the seeder, password hashing and JWT creation. |
 | 5 | [API: the front door](05-api.md) | `Program.cs` and the middleware order, JWT validation, the exception handler, controllers. |
 | 6 | [Frontend: the React app](06-frontend.md) | The API client, login state, pages, the action buttons driven by `allowedActions`. |
+| 7 | [Tests: proving the rules hold](07-tests.md) | xUnit tests for the rules table and the visibility rule. No database needed. Run with `dotnet test`. |
 
 ## Suggested reading order
 

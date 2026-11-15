@@ -20,6 +20,7 @@ The name means "balance/scale": every code change is weighed and approved before
   - `TicketingSystem.Application`: references Domain. DTOs, service interfaces, business/workflow logic go here.
   - `TicketingSystem.Infrastructure`: references Application. EF `AppDbContext`, configurations, seeder, implementations of Application interfaces. Has `FrameworkReference Microsoft.AspNetCore.App`.
   - `TicketingSystem.API`: references Application + Infrastructure. Controllers, auth setup, `Program.cs`.
+  - `TicketingSystem.Tests`: xUnit, references Application + Domain. Unit tests for `TicketWorkflow` and `TicketVisibility` (no database). `TicketWorkflowLaterStepsTests.cs` is Mahmoud's file.
 - **Dependency rule: arrows point inward only.** Never make Domain or Application reference Infrastructure/API. Application defines interfaces; Infrastructure implements them.
 
 ## Current state (backend frozen, Nov 15)
@@ -41,7 +42,9 @@ DONE:
 
 - React days 2+3 (done early, Nov 15): `CreateTicketPage` (`/tickets/new`, field errors from the server, trimmed input) and `TicketDetailsPage` (`/tickets/:id`): info, snapshots, responses, history, and `ActionsPanel`, which draws one control per name in `allowedActions`. `workflow/actions.js` holds display only (path, label, colour). Route, assign and submit have small forms. The full chain was run in the browser.
 
-NOT DONE: visual polish ("decoration", Mahmoud's call to do it later), demo data, slides.
+- Unit tests (Nov 15): `TicketingSystem.Tests`, 34 tests pass (Route/Reject/Assign, AllowedActions, Visibility), mutation check done. Mahmoud is writing the later-step tests in `TicketWorkflowLaterStepsTests.cs`; review them when he's done. Walkthrough chapter 7.
+
+NOT DONE: Mahmoud's later-step tests, cleaning up the oddities in `docs/code-walkthrough/README.md`, visual polish ("decoration", Mahmoud's call to do it later), demo data, slides.
 
 ## Next up
 1. **Visual polish** when Mahmoud wants it (plan mode first).
@@ -71,7 +74,7 @@ If a day slips, **cut scope, don't move the freeze.**
 
 ## MVP scope
 KEEP: login + roles (seeded users, no registration screen), create ticket, the full workflow chain, audit log, before/after snapshots, React: login, list, details + actions, create form.
-CUT (mention as "future work" in the presentation): comments UI, attachments, notifications/email/SignalR, admin screens (seed teams instead), refresh tokens, automated tests, rate limiting, soft-delete query filters.
+CUT (mention as "future work" in the presentation): comments UI, attachments, notifications/email/SignalR, admin screens (seed teams instead), refresh tokens, integration tests (unit tests for the rules exist), rate limiting, soft-delete query filters.
 
 ## Workflow (the core business logic)
 Status transitions. Enforce them in ONE place (a domain method or a single workflow service), never scattered in controllers:
@@ -99,7 +102,7 @@ Status transitions. Enforce them in ONE place (a domain method or a single workf
 ## How to work (be efficient, we're short on time)
 1. **Start each day's feature in plan mode.** Propose a short plan (files to add/change), get Mahmoud's OK, then build it.
 2. **Use subagents in parallel** where it saves time: an Explore agent to sweep the codebase, the `code-reviewer` agent (in `.claude/agents/`) after each feature, and the `explainer` agent when Mahmoud asks "explain this".
-3. **Run `dotnet build` from `F:\Ticketing` after every change** and fix errors yourself before reporting back. Target: 0 errors, 0 warnings.
+3. **Run `dotnet build` from `F:\Ticketing` after every change** and fix errors yourself before reporting back. Target: 0 errors, 0 warnings. Then `dotnet test` (stop the running API first, or the build can't overwrite its DLLs).
 4. Test endpoints yourself where possible (run the API, call it with curl/`.http` file) before saying a feature works.
 5. Use a task list for each day so progress is visible.
 6. Commit after each working feature, with a clear message. Ask before pushing.
