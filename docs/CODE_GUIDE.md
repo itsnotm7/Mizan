@@ -1,6 +1,6 @@
 # Mizan: Code Guide
 
-Every part of the code and what it does, in simple words. Last updated Nov 15, 2026, after React day 1 (login and ticket list).
+Every part of the code and what it does, in simple words. For the **actual code explained line by line**, see the [Code Walkthrough](code-walkthrough/README.md). Last updated Nov 15, 2026, after React day 1 (login and ticket list).
 
 ## The big picture
 

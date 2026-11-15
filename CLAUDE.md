@@ -47,7 +47,7 @@ NOT DONE: visual polish ("decoration", Mahmoud's call to do it later), demo data
 1. **Visual polish** when Mahmoud wants it (plan mode first).
 2. **Demo data + slides** (Thu 19). Rehearsal Fri 20.
 
-`docs/CODE_GUIDE.md` explains every file in simple words. Keep it updated after each feature.
+`docs/CODE_GUIDE.md` explains every file in simple words. `docs/code-walkthrough/` (6 chapters + README) shows the real code of every file with line-by-line explanations and committee Q&A. Keep both updated after each feature: when code changes, update the copied code and the "Line N" references in the matching chapter.
 
 Open items:
 - **Not tested:** clicking Authorize in Swagger UI in a browser; `/me` returning 401 for a user deactivated after login; `Add-Migration` with the startup key check (the `dotnet ef` CLI isn't installed, so confirm in Package Manager Console at the next migration).

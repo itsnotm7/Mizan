@@ -9,8 +9,8 @@ import { formatDate, priorityColor, splitWords, statusColor } from '../utils/lab
 
 const guidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-// The fields the action forms show; any other error key goes in the alert above them
-const actionFormFields = ['TeamId', 'MemberIds', 'Branch', 'CommitSha', 'Summary']
+// Fields with an input that shows its own error (submit-fix form); TeamId, MemberIds etc. go in the alert
+const actionFormFields = ['Branch', 'CommitSha', 'Summary']
 
 // "https://github.com/owner/repo/" + sha → a link to that exact commit on GitHub
 const commitUrl = (repo, sha) => `${repo.replace(/\/$/, '')}/commit/${sha}`
