@@ -56,7 +56,7 @@ DONE:
 NOT DONE: Mahmoud walking through the tests (7.5), rehearsing with the slides. Optional later: a styled confirm dialog instead of `window.confirm`.
 
 ## Next up
-1. **Rehearsal** (Fri 20). Slides: first draft done Nov 19, a 14-slide Claude Slides deck (navy + gold, speaker notes on every slide) at https://claude.ai/artifact/WnUWW87EhgJdAppxpNHhg5. Private until Mahmoud shares it; it exports to PPTX/PDF. Open items: his full name on the cover, the backup screenshots of the demo flow.
+1. **Rehearsal** (Fri 20). Slides: first draft done Nov 19, a 14-slide Claude Slides deck (navy + gold, speaker notes on every slide) at https://claude.ai/artifact/WnUWW87EhgJdAppxpNHhg5. Private until Mahmoud shares it; it exports to PPTX/PDF. Mahmoud reviewed it and liked it; his full name (Mahmoud Abdelrahman) is on the cover. He may not get to show slides (the presentation may be code + demo only), so `docs/SPEECH.md` is a ~13-minute speech with a slide cue and a "no slides" cue (which file or screen to show) for each part. Open item: the backup screenshots of the demo flow.
 
 - Demo data (Nov 19): `scripts/demo-data.ps1` clears the tickets and creates 9 through the real API, one per status (the VAT ticket has a manager send-back). Run it with the API running to reset before a rehearsal. For the live demo: "Password reset email never arrives" is Submitted (manager routes), "Orders API returns 500…" is Routed (leader assigns), "Search returns duplicate products" is Response Sent (client decides). Repo links point to a made-up `github.com/demo-client/...`, so clicking them gives a GitHub 404. Rehearsal Fri 20. Note: the demo DB ticket "Search returns duplicate products" is now Reopened (used for testing the stepper).
 
