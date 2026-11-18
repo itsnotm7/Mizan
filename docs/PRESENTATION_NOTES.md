@@ -130,3 +130,14 @@ A styled confirm dialog, a reason text when rejecting or sending back, live upda
 - **Why not test the controllers and database too?** Those were covered by the end-to-end runs (67 API checks and the full chain in the browser). The next step would be integration tests with `WebApplicationFactory`, which runs the real API in memory.
 - **What's the difference between `[Fact]` and `[Theory]`?** A Fact is one test. A Theory is one test run once per `[InlineData]` row, e.g. "Route fails from Routed, InProgress and Closed".
 - **How do you test an Expression without a database?** `.Compile()` turns it into a normal function, and you call it on in-memory tickets. It's the same logic EF Core turns into SQL.
+
+## Demo data (`scripts/demo-data.ps1`)
+
+- **What it does:** clears the tickets in the local database (users and the team stay) and creates 9 tickets, one in every status from Submitted to Closed, including Rejected and Reopened. One ticket (the VAT invoice) went back from the manager once, so its history shows a real send-back and two After snapshots.
+- **Why through the API and not SQL inserts:** the script logs in as each role and calls the same endpoints the React app uses. So every ticket passed the real rules: if the script tried a step the rules forbid, it would get a 403/409 and stop. The data can't be in a state the app could never produce.
+- **Live demo plan:** "Password reset email never arrives" is Submitted (the manager routes it live), "Orders API returns 500…" is Routed (the leader assigns live), "Search returns duplicate products" is Response Sent (the client accepts or reopens live).
+
+### Likely committee questions
+
+- **Why are all the timestamps the same minute?** The script made them all in one run, a few seconds apart. They are real timestamps written by the app, not edited ones.
+- **Does it touch production?** No. The connection string in the script is hardcoded to the local LocalDB database, and the demo users only exist in Development.

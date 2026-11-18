@@ -25,7 +25,7 @@ namespace TicketingSystem.Application.DTOs.Tickets
 
         [Required]
         [RegularExpression("^[0-9a-fA-F]{7,64}$",
-            ErrorMessage = "CommitSha must be 7 to 64 hexadecimal characters.")]
+            ErrorMessage = "The commit SHA must be 7 to 64 hexadecimal characters.")]
         public string CommitSha { get; set; } = string.Empty;
 
         // What was fixed: this becomes the response the client receives once approved

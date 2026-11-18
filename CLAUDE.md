@@ -53,10 +53,12 @@ DONE:
 
 - Final UI run (Nov 19, a day late): full chain by clicking as every role, including a leader send-back and resubmit, Reject, the leader's view of a Reopened ticket, Member Two blocked (404) on a ticket they aren't assigned to, form validation, 375px and 1366px widths. No functional bugs. Two cosmetic fixes: the repo URL error message is worded for people, and the route dropdown is stacked above its button so the team name fits. API logs had no errors. **Frontend frozen.**
 
-NOT DONE: Mahmoud walking through the tests (7.5), demo data, slides. Optional later: a styled confirm dialog instead of `window.confirm`.
+NOT DONE: Mahmoud walking through the tests (7.5), slides. Optional later: a styled confirm dialog instead of `window.confirm`.
 
 ## Next up
-1. **Demo data + slides** (Thu 19). The DB now also holds "Cart badge shows wrong item count" (Closed) and "Password reset email never arrives" (Rejected) from the UI run. Rehearsal Fri 20. Note: the demo DB ticket "Search returns duplicate products" is now Reopened (used for testing the stepper).
+1. **Slides** (Thu 19). Rehearsal Fri 20.
+
+- Demo data (Nov 19): `scripts/demo-data.ps1` clears the tickets and creates 9 through the real API, one per status (the VAT ticket has a manager send-back). Run it with the API running to reset before a rehearsal. For the live demo: "Password reset email never arrives" is Submitted (manager routes), "Orders API returns 500…" is Routed (leader assigns), "Search returns duplicate products" is Response Sent (client decides). Repo links point to a made-up `github.com/demo-client/...`, so clicking them gives a GitHub 404. Rehearsal Fri 20. Note: the demo DB ticket "Search returns duplicate products" is now Reopened (used for testing the stepper).
 
 `docs/STUDY_GUIDE.md` is Mahmoud's study plan until Nov 21 (React in .NET terms, non-code topics, demo script, self-quiz); when he says "quiz me on part X", ask fresh questions, not the ones in the file. `docs/CODE_GUIDE.md` explains every file in simple words. `docs/code-walkthrough/` (6 chapters + README) shows the real code of every file with line-by-line explanations and committee Q&A. Keep both updated after each feature: when code changes, update the copied code and the "Line N" references in the matching chapter.
 

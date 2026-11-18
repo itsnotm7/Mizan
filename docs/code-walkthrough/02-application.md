@@ -215,7 +215,7 @@ namespace TicketingSystem.Application.DTOs.Tickets
         // 7 is the shortest SHA git normally shows, 64 is a full SHA-256
         [Required]
         [RegularExpression("^[0-9a-fA-F]{7,64}$",
-            ErrorMessage = "CommitSha must be 7 to 64 hexadecimal characters.")]
+            ErrorMessage = "The commit SHA must be 7 to 64 hexadecimal characters.")]
         public string CommitSha { get; set; } = string.Empty;
 
         // JSON accepts any number for an enum (even 99), so this checks the value really exists
@@ -275,7 +275,7 @@ namespace TicketingSystem.Application.DTOs.Tickets
 
         [Required]
         [RegularExpression("^[0-9a-fA-F]{7,64}$",
-            ErrorMessage = "CommitSha must be 7 to 64 hexadecimal characters.")]
+            ErrorMessage = "The commit SHA must be 7 to 64 hexadecimal characters.")]
         public string CommitSha { get; set; } = string.Empty;
 
         // What was fixed: this becomes the response the client receives once approved

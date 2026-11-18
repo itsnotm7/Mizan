@@ -244,6 +244,7 @@ The screens people use. It runs on `http://localhost:5173` and only ever talks t
 |---|---|
 | `TicketingSystem.slnx` | The solution file that groups the 4 projects. |
 | `*.csproj` | One per project: its packages and which projects it can use. |
+| `scripts/demo-data.ps1` | Deletes all tickets in the local database and creates 9 demo tickets, one in every status. It does this by logging in as each role and calling the real API, so every ticket goes through the real workflow rules and gets a real history. Run it before a rehearsal or the presentation to start clean. |
 | `CLAUDE.md` | The project brief, plan and rules. |
 | `docs/PRESENTATION_NOTES.md` | Talking points and likely committee questions. |
 | `docs/CODE_GUIDE.md` | This file. |
