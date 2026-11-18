@@ -18,7 +18,7 @@ namespace TicketingSystem.Application.DTOs.Tickets
         [Required]
         [MaxLength(500)]
         [RegularExpression(@"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/?$",
-            ErrorMessage = "RepositoryUrl must look like https://github.com/owner/repo.")]
+            ErrorMessage = "The repository link must look like https://github.com/owner/repo.")]
         public string RepositoryUrl { get; set; } = string.Empty;
 
         [Required]

@@ -1967,7 +1967,7 @@ export default function RouteForm({ busy, onRun }) {
 
   return (
     <form
-      className="d-flex gap-2"
+      className="d-flex flex-column align-items-start gap-2"
       onSubmit={(e) => {
         e.preventDefault()
         onRun({ teamId })
@@ -1976,7 +1976,7 @@ export default function RouteForm({ busy, onRun }) {
       <select className="form-select" value={teamId} onChange={(e) => setTeamId(e.target.value)} aria-label="Team">
         {teams.map((team) => (
           <option key={team.id} value={team.id}>
-            {team.name} (leader: {team.leader.name})
+            {team.name} — {team.leader.name}
           </option>
         ))}
       </select>
@@ -1989,6 +1989,7 @@ export default function RouteForm({ busy, onRun }) {
 **Line by line:**
 - Line 10-21: load `GET /api/teams` when the form appears, with the usual AbortController pattern. Pre-select the first team, so the dropdown is never empty when submitted.
 - Line 23-25: error, loading, and "no teams" states.
+- Line 29: the dropdown sits above the button (a column), so the "team — leader" text isn't cut off in the narrow actions card.
 - Line 30-33: on submit, stop the page reload and call `onRun({ teamId })`. That body matches the backend's `RouteTicketRequest` (`TeamId`).
 - Line 35: a controlled `<select>`. `aria-label` gives screen readers a name, since there is no visible label.
 - Line 38: each option shows the team and its leader, so the manager knows who will receive it.

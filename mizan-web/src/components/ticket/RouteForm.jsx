@@ -26,7 +26,7 @@ export default function RouteForm({ busy, onRun }) {
 
   return (
     <form
-      className="d-flex gap-2"
+      className="d-flex flex-column align-items-start gap-2"
       onSubmit={(e) => {
         e.preventDefault()
         onRun({ teamId })
@@ -35,7 +35,7 @@ export default function RouteForm({ busy, onRun }) {
       <select className="form-select" value={teamId} onChange={(e) => setTeamId(e.target.value)} aria-label="Team">
         {teams.map((team) => (
           <option key={team.id} value={team.id}>
-            {team.name} (leader: {team.leader.name})
+            {team.name} — {team.leader.name}
           </option>
         ))}
       </select>
