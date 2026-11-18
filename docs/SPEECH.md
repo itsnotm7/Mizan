@@ -144,6 +144,7 @@ Use the demo-account buttons. The password is the seeded one.
 ## If something goes wrong
 
 - **The API isn't answering** (login says "Cannot reach the server"): "One moment, the server is starting." Start the API again and wait for Swagger to load.
+- **The demo can't run at all:** "Here are screenshots of the same flow, taken from the real app." Open `docs/demo-screenshots/` and go through them in order (the README there says what each one shows).
 - **A button gives an error:** read the message out loud. It's probably a 409 because the status is wrong, which shows the rules working: "See, the server refuses it, because the ticket isn't in that status."
 - **You lose your place:** go back to the **bold line** of the part you're in.
 - **A question you don't know:** "I didn't build that part yet. Here's how I would approach it…" It's fine to say what's future work.
